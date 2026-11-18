@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { DemoBanner } from "./components/DemoBanner";
 import { RouteErrorBoundary } from "./components/error-boundary/route-error-boundary";
 import { routers } from "./router";
 
@@ -13,7 +14,7 @@ const queryClient = new QueryClient();
 // shared errorElement every page bubbles up to; a page can still declare its
 // own errorElement, statically or through lazy().
 const router = createBrowserRouter([
-  { errorElement: <RouteErrorBoundary />, children: routers },
+  { element: <><DemoBanner /><Outlet /></>, errorElement: <RouteErrorBoundary />, children: routers },
 ]);
 
 const App = () => {

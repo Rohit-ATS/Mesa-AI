@@ -3329,6 +3329,7 @@ export type Database = {
       }
       cost_setting: {
         Row: {
+          data_provenance: string
           description: string
           editable: boolean
           id: string
@@ -3337,6 +3338,7 @@ export type Database = {
           value_numeric: number | null
         }
         Insert: {
+          data_provenance?: string
           description: string
           editable?: boolean
           id?: string
@@ -3345,6 +3347,7 @@ export type Database = {
           value_numeric?: number | null
         }
         Update: {
+          data_provenance?: string
           description?: string
           editable?: boolean
           id?: string
@@ -3402,6 +3405,7 @@ export type Database = {
       ingredient: {
         Row: {
           cost_data_label: string
+          data_provenance: string
           id: string
           last_updated: string
           name: string
@@ -3412,6 +3416,7 @@ export type Database = {
         }
         Insert: {
           cost_data_label?: string
+          data_provenance?: string
           id?: string
           last_updated?: string
           name: string
@@ -3422,6 +3427,7 @@ export type Database = {
         }
         Update: {
           cost_data_label?: string
+          data_provenance?: string
           id?: string
           last_updated?: string
           name?: string
@@ -3567,6 +3573,7 @@ export type Database = {
           base_yield_servings: number | null
           category: string
           dietary_tags: string[]
+          display_order: number
           id: string
           is_upsell: boolean
           name_en: string
@@ -3579,6 +3586,7 @@ export type Database = {
           base_yield_servings?: number | null
           category: string
           dietary_tags?: string[]
+          display_order?: number
           id?: string
           is_upsell?: boolean
           name_en: string
@@ -3591,6 +3599,7 @@ export type Database = {
           base_yield_servings?: number | null
           category?: string
           dietary_tags?: string[]
+          display_order?: number
           id?: string
           is_upsell?: boolean
           name_en?: string
@@ -3655,6 +3664,32 @@ export type Database = {
             foreignKeyName: "menu_package_component_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
+            referencedRelation: "menu_package"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_package_price: {
+        Row: {
+          data_provenance: string
+          package_id: string
+          price_usd: number | null
+        }
+        Insert: {
+          data_provenance?: string
+          package_id: string
+          price_usd?: number | null
+        }
+        Update: {
+          data_provenance?: string
+          package_id?: string
+          price_usd?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_package_price_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: true
             referencedRelation: "menu_package"
             referencedColumns: ["id"]
           },
@@ -3990,6 +4025,7 @@ export type Database = {
       }
       mesa_kitchen_orders: { Args: never; Returns: Json }
       mesa_owner_metrics: { Args: never; Returns: Json }
+      mesa_owner_session_metrics: { Args: { p_since: string }; Returns: Json }
       mesa_submit_demo_inquiry: {
         Args: { p_details: Json; p_dishes: string[]; p_session: string }
         Returns: string

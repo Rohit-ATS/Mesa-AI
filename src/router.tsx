@@ -4,6 +4,9 @@ import OwnerInbox from "./pages/OwnerInbox";
 import Kitchen from "./pages/Kitchen";
 import Emails from "./pages/Emails";
 import Crm from "./pages/Crm";
+import Settings from "./pages/Settings";
+import MenuAdmin from "./pages/MenuAdmin";
+import Export from "./pages/Export";
 import NotFound from "./pages/NotFound";
 
 export const routers = [
@@ -18,6 +21,9 @@ export const routers = [
   { path: "/kitchen", name: "kitchen", element: <Kitchen /> },
   { path: "/emails", name: "emails", element: <Emails /> },
   { path: "/crm", name: "crm", element: <Crm /> },
+  { path: "/settings", name: "settings", element: <Settings /> },
+  { path: "/menu", name: "menu", element: <MenuAdmin /> },
+  { path: "/export", name: "export", element: <Export /> },
   /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
   {
     path: "*",

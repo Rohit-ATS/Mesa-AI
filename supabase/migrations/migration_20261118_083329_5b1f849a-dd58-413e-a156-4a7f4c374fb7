@@ -1,0 +1,17 @@
+ALTER TABLE public.cost_setting ADD COLUMN data_provenance text NOT NULL DEFAULT 'sample' CHECK (data_provenance IN ('sample','owner-provided'));
+ALTER TABLE public.ingredient ADD COLUMN data_provenance text NOT NULL DEFAULT 'sample' CHECK (data_provenance IN ('sample','owner-provided'));
+ALTER TABLE public.menu_item ADD COLUMN display_order integer NOT NULL DEFAULT 1000;
+CREATE TABLE public.menu_package_price (package_id uuid PRIMARY KEY REFERENCES public.menu_package(id), price_usd numeric CHECK(price_usd >= 0), data_provenance text NOT NULL DEFAULT 'sample' CHECK (data_provenance IN ('sample','owner-provided')));
+ALTER TABLE public.menu_package_price ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owner manages package prices" ON public.menu_package_price FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner')) WITH CHECK (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner'));
+CREATE FUNCTION public.mesa_mark_cost_provenance() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.value_numeric IS DISTINCT FROM OLD.value_numeric THEN NEW.data_provenance='owner-provided'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER mesa_cost_provenance BEFORE UPDATE OF value_numeric ON public.cost_setting FOR EACH ROW EXECUTE FUNCTION public.mesa_mark_cost_provenance();
+CREATE FUNCTION public.mesa_mark_ingredient_provenance() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.unit_cost_usd IS DISTINCT FROM OLD.unit_cost_usd THEN NEW.data_provenance='owner-provided'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER mesa_ingredient_provenance BEFORE UPDATE OF unit_cost_usd ON public.ingredient FOR EACH ROW EXECUTE FUNCTION public.mesa_mark_ingredient_provenance();
+CREATE FUNCTION public.mesa_mark_package_price_provenance() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.price_usd IS DISTINCT FROM OLD.price_usd THEN NEW.data_provenance='owner-provided'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER mesa_package_price_provenance BEFORE UPDATE OF price_usd ON public.menu_package_price FOR EACH ROW EXECUTE FUNCTION public.mesa_mark_package_price_provenance();
+UPDATE public.cost_setting SET editable=true, description=replace(description,'owner-stated','illustrative default') WHERE NOT editable OR description ILIKE '%owner-stated%';
+UPDATE public.business_context SET content=replace(content,'(owner-stated)','(illustrative default)') WHERE section='operating_numbers' AND content LIKE '%(owner-stated)%';
+INSERT INTO public.menu_item(name_es,name_en,category,portion_size_oz,is_upsell,dietary_tags,display_order) VALUES ('Rabo Encendido','Braised Oxtail','entree',8,false,ARRAY['gluten_free'],4),('Maduros','Sweet Fried Plantains','side',6,false,ARRAY['vegetarian','vegan','gluten_free'],3) ON CONFLICT(name_es) DO NOTHING;
+UPDATE public.menu_item SET display_order=CASE name_es WHEN 'Pollo Guisado' THEN 1 WHEN 'Pernil Asado' THEN 2 WHEN 'Res Guisada' THEN 3 WHEN 'Rabo Encendido' THEN 4 WHEN 'Arroz Blanco' THEN 1 WHEN 'Habichuelas Guisadas' THEN 2 WHEN 'Maduros' THEN 3 WHEN 'Tres Leches' THEN 1 ELSE display_order END WHERE name_es IN ('Pollo Guisado','Pernil Asado','Res Guisada','Rabo Encendido','Arroz Blanco','Habichuelas Guisadas','Maduros','Tres Leches');
+INSERT INTO public.menu_package_price(package_id,price_usd) SELECT id,NULL FROM public.menu_package ON CONFLICT(package_id) DO NOTHING;
