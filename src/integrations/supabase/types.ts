@@ -3695,6 +3695,66 @@ export type Database = {
           },
         ]
       }
+      mesa_auto_proposal: {
+        Row: {
+          calculation_error: string | null
+          created_at: string
+          email_recipients: string[]
+          email_status: string | null
+          error: string | null
+          estimated_fields: string[]
+          inquiry_id: string
+          proposal_draft: string | null
+          quote_id: string | null
+          research_brief: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          calculation_error?: string | null
+          created_at?: string
+          email_recipients?: string[]
+          email_status?: string | null
+          error?: string | null
+          estimated_fields?: string[]
+          inquiry_id: string
+          proposal_draft?: string | null
+          quote_id?: string | null
+          research_brief?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          calculation_error?: string | null
+          created_at?: string
+          email_recipients?: string[]
+          email_status?: string | null
+          error?: string | null
+          estimated_fields?: string[]
+          inquiry_id?: string
+          proposal_draft?: string | null
+          quote_id?: string | null
+          research_brief?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_auto_proposal_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_auto_proposal_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_change_notice: {
         Row: {
           audience: string

@@ -52,7 +52,7 @@ export function useInquiryDraft() {
       await ensureReady();
       const session = sessionStorage.getItem(sessionKey);
       if (!session) throw new Error("Could not start your conversation. Please try again.");
-      const { error } = await supabase.rpc("mesa_submit_demo_inquiry", {
+      const { data: inquiryId, error } = await supabase.rpc("mesa_submit_demo_inquiry", {
         p_session: session,
         p_details: {
           name: details.name.trim(),
@@ -67,6 +67,9 @@ export function useInquiryDraft() {
       });
       if (error) throw new Error(error.message);
       setStatus("saved");
+      // Start research, quote calculation, proposal draft and owner email in the background.
+      // The inquiry is already saved, so a failure here must not be reported as a failed submission.
+      if (inquiryId) void supabase.functions.invoke("mesa-auto-proposal-3759b04e315c", { body: { inquiry_id: inquiryId, session } });
     } catch (err) {
       setStatus("idle");
       setSubmitError(`Could not save your request: ${err instanceof Error ? err.message : "Please try again."}`);

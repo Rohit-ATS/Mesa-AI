@@ -1,0 +1,1 @@
+update public.mesa_auto_proposal set status='failed', error='Test run interrupted (background execution unsupported)' where inquiry_id='33e7b45c-48bd-4fcb-ac60-d8294f73e463' and status='running';
