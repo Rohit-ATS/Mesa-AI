@@ -159,6 +159,15 @@ Use two separate demo accounts: an owner demo and a kitchen demo. Customers cont
 - [ ] Enable the existing Gmail-backed **team-only test email** flow for the owner and kitchen previews. Only send after an owner explicitly selects a permitted team address and confirms permission; never send to customers or the business owner without his permission. Distinguish an accepted send from confirmed delivery and from an unknown result. Do not automatically retry uncertain sends.
 - [ ] Verify both demo roles, quote and proposal review, approved-order handoff, financial isolation, and the email test flow when authorized accounts and a permitted team test address are available. Report anything blocked or unverified honestly; AI usage may incur charges.
 
+## Current focus: reliable staff authentication
+
+The app already uses Enter Cloud email-and-password authentication and the two requested accounts have been assigned owner and kitchen roles. The existing owner sign-in is embedded in the business-context page, while kitchen has a separate sign-in; recent login requests failed, but the available diagnostics do not establish why. Improve the actual flow instead of replacing working accounts or pretending a different backend is connected.
+
+- [ ] Provide a clear, consistent email-and-password sign-in experience for both staff roles. After successful authentication, route owners to the owner console and kitchen staff to the kitchen screen, including when an existing session is restored. Preserve the footer entry points, working sign-out, and the user's latest request to allow account registration.
+- [ ] Show understandable feedback for invalid credentials, account confirmation, unavailable services, and accounts without a staff role. Registration alone must not grant either role; only explicitly assigned staff can access protected areas.
+- [ ] Preserve the two existing accounts and role assignments. Enforce owner-only financial access and kitchen-only approved operational access at the data layer, not by navigation alone; do not reset passwords, delete accounts, expose credentials, or weaken existing protections.
+- [ ] Investigate the observed login failures and verify both roles and wrong-role access where safely possible. If verification requires a user-controlled password or email confirmation, explain the remaining step without asking for passwords in chat or claiming an untested login works.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
