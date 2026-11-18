@@ -1,45 +1,49 @@
-# La Bandera Kitchen: design refinement
+# Inquiry redesign: guided chat with a live request card
 
-The result is the same site with the same layout, copy, section order, brand voice, brick red and slab display font. It gets a cleaner cream look, more readable text, a sparing Dominican-blue accent, and type-only menu cards. The public landing page is the only part that changes. Staff pages (Owner, CRM, Kitchen, Admin) and all inquiry behavior stay as they are.
+The inquiry popup becomes a chat-first experience. Quick-pick controls inside the chat collect each event detail, and a read-only "Your request so far" card updates as the customer answers. A review step ends in one demo submit button. The popup is restyled to match the public site. The Sazón Catering free-text chat stays available. Owner and kitchen pages, data, menu, and the rest of the public site are not changed.
 
-## Background and text
-- [ ] The page background is warm cream (#F3EBDD). The current tan appears only on the alternating bands: the marquee strip and the footer.
-- [ ] Body text is dark brown (#2B1D17). Secondary and muted text is darkened so every text and background pair meets WCAG AA (4.5:1 for normal text).
-- [ ] Text on the tan bands (marquee, footer) switches to dark brown, because brick red on tan is below AA. Brick red stays for headlines and buttons on cream.
-- [ ] No text is smaller than 12px anywhere on the public page. That includes eyebrow labels, the top bar, card meta text, nav, buttons, the footer line and the header logo text.
+## How the chat works
+- [ ] The chat opens with a short welcome and walks through the details one at a time, in this order: name, event date, event time, guest count, service style, venue address, dietary needs. Each step is a short assistant message with its control directly under it.
+- [ ] The controls are:
+  - Name and venue address: a short inline text field with a confirm button.
+  - Date: a date picker. Time: a time picker.
+  - Guest count: a stepper with minus and plus buttons and a typed number, accepting 1 to 10,000.
+  - Service style: three large buttons (Drop-off, Setup & Serve, Full Service).
+  - Dietary needs: toggle chips (None, Vegetarian, Vegan, Gluten-free, Dairy-free, Nut allergy) plus an "Other" chip that reveals a short text box. "None" clears the other chips and the other chips clear "None". Dietary needs count as answered only after the customer confirms. The customer must pick at least one chip, or "None", so an unanswered question is never treated as no restrictions.
+- [ ] Answering a control writes it straight to the summary card and the chat shows the answer as the customer's reply. The chat then moves to the next unanswered detail.
+- [ ] The customer can type to Sazón at any time. Sazón's replies appear in the same thread. This is a conversation only: Sazón's answers are not read back into the card, because no assistant or backend change is part of this work. The chat says so in one short line.
+- [ ] Empty or invalid answers (blank name, a past or missing date, 0 guests) show a clear message in red under the control and are not saved.
 
-## Typography
-- [ ] The slab display font gets positive letter-spacing, replacing the current tight negative spacing. This covers the hero "LA BANDERA KITCHEN", "Made for the table.", "Good food is better together.", the story headline, the service headline and the overlay text on the hero photo. Letters no longer touch.
-- [ ] The slab font is used only for large section headlines. Menu card titles and the service names (Drop-off, Setup & Serve, Full Service) switch to the condensed nav sans, bold and uppercase. The smaller "Pick your favorites." subhead also moves off the slab font.
+## The "Your request so far" card
+- [ ] A read-only card on the right replaces the navy form. It has a brick-red slab heading, "THE DETAILS" and field labels in uppercase Oswald, and a progress bar reading "5 of 7 details". The seven details are name, date, time, guests, service style, address, and dietary needs.
+- [ ] Each field shows a check and its value once captured, and "Still needed" when missing.
+- [ ] Each field has an "Edit" link. Clicking it scrolls to the chat and reopens that control with the current value filled in. Saving the new value updates the card, and the old reply in the chat is marked as updated rather than left contradicting the card.
+- [ ] Selected dishes appear as removable chips at the top of the card, and removing one also unselects it in the menu. With no dishes the card says "Choose dishes from the menu".
+- [ ] The card stays sticky beside the chat on desktop. The note "Chat answers are not automatically copied yet" is removed.
 
-## Accent blue (#002D62)
-- [ ] Blue appears only on the selected menu card state, the inquiry count badge, and small tags (dietary tags). Everything else keeps the current red.
-- [ ] The inquiry link in the header shows the count as a small blue badge, e.g. "YOUR INQUIRY" with a blue "0" pill. The count updates as dishes are added or removed.
+## Review and submit
+- [ ] A "Review and confirm" step lists every detail and every dish in one summary, with an Edit link on each row and a way back to the chat.
+- [ ] One "Submit demo inquiry" button saves the request. It is disabled until all seven details and at least one dish are set, and a line beside it says exactly what is missing (for example "Still needed: event time, 1 dish").
+- [ ] On success the card and review show: "Saved as a demo inquiry. No email was sent." Controls are locked and a repeat submit is not possible.
+- [ ] If saving fails, the real error is shown, the customer's answers and dishes are kept, and the customer can retry. The success message never appears for a failed save.
+- [ ] The existing protected demo submission is reused as-is. The answers are sent to it in the same shape as today, with dietary chips joined into one text value. Demo labeling and synthetic-data wording stay.
 
-## Menu cards
-- [ ] The repeated placeholder photo and its "ILLUSTRATIVE IMAGE" tag are removed from every card. Each card shows only the number, dish name, English description, serving size and dietary tag.
-- [ ] The whole card is one clickable target that adds or removes the dish. It is keyboard-accessible and announces its selected state.
-- [ ] Selected cards have a blue border, a light blue-tinted background and a check icon in the top-right corner. Unselected cards have no check or plus button.
-- [ ] The "SAMPLE MENU — EDITABLE" label is removed.
-- [ ] The "ILLUSTRATIVE IMAGE" tags are also removed from the hero photo and the story photo, since you asked for all of them to go.
+## Visual changes
+- [ ] The popup and the chat use the site's cream background and brick-red slab heading. The navy block and the older dashboard-style cards, small labels and rounded corners are removed.
+- [ ] Dominican blue (#002D62) is used only for selected-dish chips, the progress bar, and the count badge. Brick red is used for everything else that needs emphasis.
+- [ ] The Send button is solid brick red with light text whenever there is text to send. It looks muted only when the box is empty or a reply is in progress.
+- [ ] The chat panel grows to fit its content up to a sensible height, then scrolls, with no large empty area below the input.
+- [ ] Mobile shows a single column: the chat, with the card replaced by a sticky bottom bar reading, for example, "3 dishes · 5 of 7 details · Review". Tapping Review opens the review step. Nothing is stacked as two competing panels.
+- [ ] All text is at least 12px, all buttons, chips, steppers and inputs are at least 44px tall to tap, and errors are shown in red text with an icon, not by color alone. Contrast meets WCAG AA on cream.
+- [ ] Controls work with a keyboard, with visible focus, and chat updates are announced to screen readers.
 
-## Empty space and callouts
-- [ ] In "We'll bring the sabor", a primary "Plan your gathering" button sits under the headline on the left and opens the inquiry as the other "Plan your gathering" links do.
-- [ ] In the footer CTA, the small "Back to the menu" link is replaced by a primary button on the right. The label stays "Back to the menu" and it still goes to the menu. On mobile it stacks below the headline.
-- [ ] The "La Bandera Plate — One entrée with Arroz Blanco and Habichuelas Guisadas" line becomes a highlighted callout box above the menu tabs. It has a brick-red accent edge on a light cream-tint fill, with the plate name emphasized. The text is unchanged and it still appears only when the package loads.
-
-## Cleanup
-- [ ] The footer CTA eyebrow changes from "FROM OAKLAND, WITH CORAZÓN" to "LET'S GATHER". The story section keeps the original. This is a new line of copy, so tell me if you want different wording.
-- [ ] In the hero's right-hand side text, "Good food. Good people." becomes "Made for sharing." It remains in the top bar.
-- [ ] The footer uses the same content width and side margins as the rest of the page (1200px container with 1.5rem padding).
-- [ ] The short red divider is removed where it sits directly above a full-width line: under the hero (above the marquee border) and under the story section (above the footer border). The divider between the menu and story stays, since no line follows it.
-- [ ] The header logo seal is enlarged from 64px to 72px, and its inner text is raised to at least 12px so it stays legible. It also scales sensibly on small screens.
-
-## Unchanged
-- Copy (apart from the two replacements above), section order, menu loading, add/remove behavior, the inquiry dialog and its chat summary, and all staff pages.
-- Mobile and tablet layouts stay responsive after these changes.
+## Kept as is
+- Customers never see prices anywhere in the inquiry, including Sazón's replies.
+- Demo-only wording and synthetic data remain, and no email, payment or customer message is sent.
+- Menu browsing and selection, the header inquiry badge, the owner and kitchen pages, the owner inbox, and the data model are unchanged.
 
 ## Assumptions
-- "Current tan" means the existing tan page color (about #B5A98F). It is kept as-is for the marquee and footer.
-- The nav's condensed sans is Oswald, which the site already loads. It is used for card titles and service names.
-- The blue badge uses the existing inquiry count, so no new data is needed.
+- Guided questions are scripted in the page, not generated by Sazón. Only the quick-pick answers fill the card.
+- Name is collected as a demo customer name, as it is today.
+- The "Other" dietary text is limited to 250 characters, matching what the saved request accepts.
+- Time is saved as entered. The app does not check it against the venue's hours.
