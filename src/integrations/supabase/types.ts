@@ -3660,6 +3660,24 @@ export type Database = {
           },
         ]
       }
+      mesa_change_notice: {
+        Row: {
+          audience: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       mesa_staff: {
         Row: {
           role: string

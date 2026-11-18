@@ -1,0 +1,19 @@
+CREATE TABLE public.mesa_change_notice (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), audience text NOT NULL CHECK (audience IN ('owner','kitchen')), created_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE public.mesa_change_notice ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "staff read authorized change notices" ON public.mesa_change_notice FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff s WHERE s.user_id=auth.uid() AND (s.role='owner' OR (s.role='kitchen' AND audience='kitchen'))));
+CREATE FUNCTION public.mesa_notify_change() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE row_data jsonb; inquiry_key uuid; was_approved boolean := false; is_approved boolean := false;
+BEGIN
+ row_data := CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
+ IF TG_TABLE_NAME='inquiry' THEN inquiry_key := (row_data->>'id')::uuid; IF TG_OP <> 'INSERT' THEN was_approved := OLD.status='approved'; END IF; IF TG_OP <> 'DELETE' THEN is_approved := NEW.status='approved'; END IF;
+ ELSE inquiry_key := (row_data->>'inquiry_id')::uuid; SELECT EXISTS (SELECT 1 FROM public.inquiry WHERE id=inquiry_key AND status='approved') INTO is_approved; END IF;
+ INSERT INTO public.mesa_change_notice(audience) VALUES ('owner');
+ IF was_approved OR is_approved THEN INSERT INTO public.mesa_change_notice(audience) VALUES ('kitchen'); END IF;
+ RETURN NULL;
+END $$;
+CREATE TRIGGER mesa_notice_inquiry AFTER INSERT OR UPDATE OR DELETE ON public.inquiry FOR EACH ROW EXECUTE FUNCTION public.mesa_notify_change();
+CREATE TRIGGER mesa_notice_order AFTER INSERT OR UPDATE OR DELETE ON public.order_line FOR EACH ROW EXECUTE FUNCTION public.mesa_notify_change();
+CREATE TRIGGER mesa_notice_quote AFTER INSERT OR UPDATE OR DELETE ON public.quote FOR EACH ROW EXECUTE FUNCTION public.mesa_notify_change();
+CREATE TRIGGER mesa_notice_prep AFTER INSERT OR UPDATE OR DELETE ON public.prep_task FOR EACH ROW EXECUTE FUNCTION public.mesa_notify_change();
+CREATE TRIGGER mesa_notice_check AFTER INSERT OR UPDATE OR DELETE ON public.kitchen_checklist FOR EACH ROW EXECUTE FUNCTION public.mesa_notify_change();
+ALTER PUBLICATION supabase_realtime ADD TABLE public.mesa_change_notice;
