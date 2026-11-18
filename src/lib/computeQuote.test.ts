@@ -1,0 +1,21 @@
+import { strict as assert } from "node:assert";
+import { computeQuote, type QuoteOrderLine, type QuoteSettings } from "./computeQuote";
+
+const values: Record<string, number | null> = { labor_rate_hourly: 22, payroll_burden_pct: 0.12, waste_pct_default: 0.08, prep_min_per_guest: 1.6, base_prep_hours: 2, guests_per_prep_staff: 40, guests_per_service_staff: 25, setup_teardown_hours: 1.5, kitchen_rent_monthly: 500, events_per_month: 20, transport_base_fee: 35, transport_per_mile: 0.7, guests_per_vehicle: 150, packaging_per_guest: 1.75, target_margin_pct: 0.35, deposit_pct: 0.5, local_min_wage_hourly: 17.34, margin_green_threshold: 0.30, margin_yellow_threshold: 0.20, tax_estimate_usd: null };
+const settings: QuoteSettings = { cost_settings: Object.entries(values).map(([key,value_numeric]) => ({ key,value_numeric })), competitor_benchmarks: [] };
+const line = (menu_item_id: string, ingredients: [number, string, number, number | null][]): QuoteOrderLine => ({ menu_item_id, qty_servings: 220, recipe_lines: ingredients.map(([qty_per_serving, unit, unit_cost_usd, waste_pct]) => ({ qty_per_serving, unit, ingredient: { unit, unit_cost_usd, waste_pct } })) });
+const lines = [line("Pollo Guisado", [[0.5,"lb",3.5,10],[0.1,"lb",2.5,10],[0.1,"oz",0.5,0],[0.25,"fl oz",0.15,0]]),line("Arroz Blanco", [[0.1,"fl oz",0.15,0],[0.13,"lb",1.5,0]]),line("Habichuelas Guisadas", [[0.05,"lb",2.5,10],[0.15,"lb",2.5,0],[0.05,"oz",0.5,0]])];
+const inquiry = { guest_count: 220, service_style: "full_service" as const, distance_mi: 18, event_duration_hours: 4 };
+const result = computeQuote(inquiry, lines, settings);
+assert.equal(result.prep_staff, 6); assert.equal(result.service_staff, 9); assert.equal(result.vehicles, 2);
+assert.ok(Math.abs(result.food_cost - 667.7) < 0.001);
+assert.ok(Math.abs(result.labor_cost - 1413.5146666666667) < 0.001);
+assert.equal(result.overhead_cost, 25); assert.ok(Math.abs(result.transport_cost - 120.4) < 0.001); assert.equal(result.packaging_cost, 385);
+assert.equal(result.tax, null); assert.equal(result.competitor_low, null); assert.equal(result.minimum_wage_flag, "ok"); assert.equal(result.margin_flag, "green");
+assert.ok(Object.values(result.assumptions).every(Boolean));
+const changed = computeQuote(inquiry, lines, { ...settings, cost_settings: settings.cost_settings.map(s => s.key === "labor_rate_hourly" ? { ...s, value_numeric: 15 } : s) });
+assert.equal(changed.minimum_wage_flag, "red"); assert.ok(changed.recommended_price < result.recommended_price);
+const competitive = computeQuote(inquiry, lines, { ...settings, competitor_benchmarks: [{ business_name: "Synthetic sample", researched_on: "2026-01-01", min_guests: 100, price_per_guest_dropoff: 10, price_per_guest_full_service: 15 }] });
+assert.equal(competitive.competitor_low, 15); assert.ok(competitive.assumptions.competitor.includes("2026-01-01"));
+assert.throws(() => computeQuote(inquiry, [{ ...lines[0], recipe_lines: [] }], settings), /Missing recipe/);
+console.log(JSON.stringify(result, null, 2));
