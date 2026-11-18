@@ -35,6 +35,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
+    --status-green: 142 50% 37%;
+    --status-yellow: 42 90% 48%;
+    --status-red: 354 68% 39%;
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
@@ -103,6 +106,12 @@
   }
 }
 
+@keyframes quote-update { from { opacity: .45; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.quote-change { display: inline-block; animation: quote-update .22s ease-out; }
+.margin-green { background: hsl(var(--status-green)); color: hsl(var(--primary-foreground)); }
+.margin-yellow { background: hsl(var(--status-yellow)); color: hsl(var(--secondary)); }
+.margin-red { background: hsl(var(--status-red)); color: hsl(var(--primary-foreground)); }
+@media (prefers-reduced-motion: reduce) { .quote-change { animation: none; } }
 .eyebrow { display: flex; align-items: center; gap: .75rem; color: hsl(var(--primary)); font-size: .7rem; font-weight: 700; letter-spacing: .2em; }
 .flag-mark { display: grid; grid-template-columns: repeat(2, 8px); grid-template-rows: repeat(2, 6px); gap: 2px; padding: 3px; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); }
 .flag-mark i:nth-child(1), .flag-mark i:nth-child(4) { background: hsl(var(--secondary)); }

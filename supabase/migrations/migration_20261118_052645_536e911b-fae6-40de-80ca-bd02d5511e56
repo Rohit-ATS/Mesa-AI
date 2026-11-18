@@ -1,0 +1,24 @@
+CREATE FUNCTION public.mesa_approve_quote(p_inquiry_id uuid, p_quote jsonb, p_prep_hours numeric) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE event_start timestamptz; current_status text; next_version integer; new_id uuid;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner') THEN RAISE EXCEPTION 'Owner access required'; END IF;
+  SELECT status, (event_date + event_time) AT TIME ZONE 'America/Los_Angeles' INTO current_status, event_start FROM public.inquiry WHERE id=p_inquiry_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Inquiry not found'; END IF;
+  IF current_status='approved' THEN RAISE EXCEPTION 'Inquiry already approved'; END IF;
+  IF event_start IS NULL OR p_prep_hours IS NULL OR p_prep_hours <= 0 THEN RAISE EXCEPTION 'Event date, event time, and prep hours are required'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.quote WHERE inquiry_id=p_inquiry_id AND status='draft') THEN RAISE EXCEPTION 'A draft quote is required'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.order_line WHERE inquiry_id=p_inquiry_id) OR EXISTS (SELECT 1 FROM public.order_line o WHERE o.inquiry_id=p_inquiry_id AND NOT EXISTS (SELECT 1 FROM public.recipe_line r WHERE r.menu_item_id=o.menu_item_id)) THEN RAISE EXCEPTION 'Order lines and recipes are required'; END IF;
+  SELECT COALESCE(MAX(version),0)+1 INTO next_version FROM public.quote WHERE inquiry_id=p_inquiry_id;
+  INSERT INTO public.quote (inquiry_id,food_cost,labor_cost,overhead_cost,transport_cost,packaging_cost,tax,total_cost,recommended_price,margin_pct,price_per_guest,competitor_low,competitor_high,competitor_percentile,assumptions_json,version,status)
+  VALUES (p_inquiry_id,(p_quote->>'food_cost')::numeric,(p_quote->>'labor_cost')::numeric,(p_quote->>'overhead_cost')::numeric,(p_quote->>'transport_cost')::numeric,(p_quote->>'packaging_cost')::numeric,(p_quote->>'tax')::numeric,(p_quote->>'total_cost')::numeric,(p_quote->>'recommended_price')::numeric,(p_quote->>'margin_pct')::numeric,(p_quote->>'price_per_guest')::numeric,(p_quote->>'competitor_low')::numeric,(p_quote->>'competitor_high')::numeric,(p_quote->>'competitor_percentile')::numeric,p_quote->'assumptions',next_version,'approved') RETURNING id INTO new_id;
+  INSERT INTO public.prep_task (inquiry_id,menu_item_id,qty_servings,prep_notes,due_at) SELECT p_inquiry_id,menu_item_id,qty_servings,note,event_start - (p_prep_hours * interval '1 hour') FROM public.order_line WHERE inquiry_id=p_inquiry_id;
+  UPDATE public.inquiry SET status='approved' WHERE id=p_inquiry_id;
+  RETURN new_id;
+END $$;
+REVOKE ALL ON FUNCTION public.mesa_approve_quote(uuid,jsonb,numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mesa_approve_quote(uuid,jsonb,numeric) TO authenticated;
+CREATE FUNCTION public.mesa_is_approved_inquiry(p_id uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT EXISTS (SELECT 1 FROM public.inquiry WHERE id=p_id AND status='approved') $$;
+REVOKE ALL ON FUNCTION public.mesa_is_approved_inquiry(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.mesa_is_approved_inquiry(uuid) TO authenticated;
+DROP POLICY "kitchen reads approved tasks" ON public.prep_task;
+CREATE POLICY "kitchen reads approved tasks" ON public.prep_task FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff s WHERE s.user_id=auth.uid() AND s.role='kitchen') AND public.mesa_is_approved_inquiry(inquiry_id));

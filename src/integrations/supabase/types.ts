@@ -3285,6 +3285,39 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_benchmark: {
+        Row: {
+          business_name: string
+          city: string
+          id: string
+          min_guests: number | null
+          price_per_guest_dropoff: number | null
+          price_per_guest_full_service: number | null
+          researched_on: string
+          source_url: string | null
+        }
+        Insert: {
+          business_name: string
+          city: string
+          id?: string
+          min_guests?: number | null
+          price_per_guest_dropoff?: number | null
+          price_per_guest_full_service?: number | null
+          researched_on: string
+          source_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          city?: string
+          id?: string
+          min_guests?: number | null
+          price_per_guest_dropoff?: number | null
+          price_per_guest_full_service?: number | null
+          researched_on?: string
+          source_url?: string | null
+        }
+        Relationships: []
+      }
       cost_setting: {
         Row: {
           description: string
@@ -3309,6 +3342,36 @@ export type Database = {
           key?: string
           unit?: string
           value_numeric?: number | null
+        }
+        Relationships: []
+      }
+      customer: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_type: string | null
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_type?: string | null
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_type?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
@@ -3359,6 +3422,80 @@ export type Database = {
           waste_pct?: number
         }
         Relationships: []
+      }
+      inquiry: {
+        Row: {
+          budget_hint: number | null
+          channel: string | null
+          completeness_score: number | null
+          created_at: string
+          customer_id: string
+          dietary_flags: string[]
+          distance_mi: number | null
+          event_date: string | null
+          event_duration_hours: number | null
+          event_time: string | null
+          guest_count: number | null
+          id: string
+          missing_fields: string[]
+          raw_text: string
+          service_style: string | null
+          status: string
+          upsell_value_usd: number | null
+          venue_address: string | null
+          venue_zip: string | null
+        }
+        Insert: {
+          budget_hint?: number | null
+          channel?: string | null
+          completeness_score?: number | null
+          created_at?: string
+          customer_id: string
+          dietary_flags?: string[]
+          distance_mi?: number | null
+          event_date?: string | null
+          event_duration_hours?: number | null
+          event_time?: string | null
+          guest_count?: number | null
+          id?: string
+          missing_fields?: string[]
+          raw_text?: string
+          service_style?: string | null
+          status?: string
+          upsell_value_usd?: number | null
+          venue_address?: string | null
+          venue_zip?: string | null
+        }
+        Update: {
+          budget_hint?: number | null
+          channel?: string | null
+          completeness_score?: number | null
+          created_at?: string
+          customer_id?: string
+          dietary_flags?: string[]
+          distance_mi?: number | null
+          event_date?: string | null
+          event_duration_hours?: number | null
+          event_time?: string | null
+          guest_count?: number | null
+          id?: string
+          missing_fields?: string[]
+          raw_text?: string
+          service_style?: string | null
+          status?: string
+          upsell_value_usd?: number | null
+          venue_address?: string | null
+          venue_zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_item: {
         Row: {
@@ -3474,6 +3611,167 @@ export type Database = {
         }
         Relationships: []
       }
+      order_line: {
+        Row: {
+          id: string
+          inquiry_id: string
+          menu_item_id: string
+          note: string | null
+          qty_servings: number
+        }
+        Insert: {
+          id?: string
+          inquiry_id: string
+          menu_item_id: string
+          note?: string | null
+          qty_servings: number
+        }
+        Update: {
+          id?: string
+          inquiry_id?: string
+          menu_item_id?: string
+          note?: string | null
+          qty_servings?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_line_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_line_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_task: {
+        Row: {
+          done: boolean
+          due_at: string
+          id: string
+          inquiry_id: string
+          menu_item_id: string
+          prep_notes: string | null
+          qty_servings: number
+          station: string | null
+        }
+        Insert: {
+          done?: boolean
+          due_at: string
+          id?: string
+          inquiry_id: string
+          menu_item_id: string
+          prep_notes?: string | null
+          qty_servings: number
+          station?: string | null
+        }
+        Update: {
+          done?: boolean
+          due_at?: string
+          id?: string
+          inquiry_id?: string
+          menu_item_id?: string
+          prep_notes?: string | null
+          qty_servings?: number
+          station?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_task_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_task_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote: {
+        Row: {
+          assumptions_json: Json | null
+          competitor_high: number | null
+          competitor_low: number | null
+          competitor_percentile: number | null
+          created_at: string
+          food_cost: number | null
+          id: string
+          inquiry_id: string
+          labor_cost: number | null
+          margin_pct: number | null
+          overhead_cost: number | null
+          packaging_cost: number | null
+          price_per_guest: number | null
+          recommended_price: number | null
+          status: string
+          tax: number | null
+          total_cost: number | null
+          transport_cost: number | null
+          version: number
+        }
+        Insert: {
+          assumptions_json?: Json | null
+          competitor_high?: number | null
+          competitor_low?: number | null
+          competitor_percentile?: number | null
+          created_at?: string
+          food_cost?: number | null
+          id?: string
+          inquiry_id: string
+          labor_cost?: number | null
+          margin_pct?: number | null
+          overhead_cost?: number | null
+          packaging_cost?: number | null
+          price_per_guest?: number | null
+          recommended_price?: number | null
+          status: string
+          tax?: number | null
+          total_cost?: number | null
+          transport_cost?: number | null
+          version: number
+        }
+        Update: {
+          assumptions_json?: Json | null
+          competitor_high?: number | null
+          competitor_low?: number | null
+          competitor_percentile?: number | null
+          created_at?: string
+          food_cost?: number | null
+          id?: string
+          inquiry_id?: string
+          labor_cost?: number | null
+          margin_pct?: number | null
+          overhead_cost?: number | null
+          packaging_cost?: number | null
+          price_per_guest?: number | null
+          recommended_price?: number | null
+          status?: string
+          tax?: number | null
+          total_cost?: number | null
+          transport_cost?: number | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_line: {
         Row: {
           id: string
@@ -3539,7 +3837,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      mesa_approve_quote: {
+        Args: { p_inquiry_id: string; p_prep_hours: number; p_quote: Json }
+        Returns: string
+      }
+      mesa_is_approved_inquiry: { Args: { p_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
