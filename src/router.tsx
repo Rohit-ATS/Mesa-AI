@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Context from "./pages/Context";
 import OwnerInbox from "./pages/OwnerInbox";
@@ -16,7 +17,7 @@ export const routers = [
     name: "home",
     element: <Index />,
   },
-  { path: "/inquire", name: "inquire", element: <Index /> },
+  { path: "/inquire", name: "inquire", element: <Navigate to="/" replace /> },
   { path: "/context", name: "context", element: <Context /> },
   { path: "/owner", name: "owner", element: <OwnerInbox /> },
   { path: "/kitchen", name: "kitchen", element: <Kitchen /> },
