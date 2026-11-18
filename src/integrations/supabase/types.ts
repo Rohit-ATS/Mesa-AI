@@ -3678,6 +3678,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mesa_intake_threads: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          session_hash: string
+          thread_id: string
+          version: number | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          session_hash: string
+          thread_id: string
+          version?: number | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          session_hash?: string
+          thread_id?: string
+          version?: number | null
+        }
+        Relationships: []
+      }
       mesa_staff: {
         Row: {
           role: string
