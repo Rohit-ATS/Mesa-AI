@@ -112,7 +112,7 @@
 .margin-yellow { background: hsl(var(--status-yellow)); color: hsl(var(--secondary)); }
 .margin-red { background: hsl(var(--status-red)); color: hsl(var(--primary-foreground)); }
 @media (prefers-reduced-motion: reduce) { .quote-change { animation: none; } }
-.eyebrow { display: flex; align-items: center; gap: .75rem; color: hsl(var(--primary)); font-size: .7rem; font-weight: 700; letter-spacing: .2em; }
+.eyebrow { display: flex; align-items: center; gap: .75rem; color: hsl(var(--primary)); font-size: .75rem; font-weight: 700; letter-spacing: .2em; }
 .flag-mark { display: grid; grid-template-columns: repeat(2, 8px); grid-template-rows: repeat(2, 6px); gap: 2px; padding: 3px; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); }
 .flag-mark i:nth-child(1), .flag-mark i:nth-child(4) { background: hsl(var(--secondary)); }
 .flag-mark i:nth-child(2), .flag-mark i:nth-child(3) { background: hsl(var(--primary)); }

@@ -139,6 +139,15 @@ This request supersedes earlier references to owner-stated cost figures: all cur
 - [ ] Rename the price display “Suggested price — your call,” show the requested helper and approval-authority text, and require an explicit availability confirmation before approval. Preserve the existing draft/approved version behavior and the no-automatic-customer-message rule.
 - [ ] Add the requested “Prototype boundaries” section to `/context`, retain no live payments or real customer messaging, and verify owner/kitchen permissions and working export/edit behavior using authorized accounts when available.
 
+## Current focus: faster chat-first inquiries
+
+Keep the existing Sazón Catering assistant and inquiry popup, but make conversation the primary way to provide event details. The current chat and form are separate, so removing the form requires connecting captured answers to the existing demo submission flow rather than just hiding inputs.
+
+- [ ] Replace the separate inquiry form fields with a chat-first experience: the assistant asks for the necessary event details and dishes, and the request summary updates as confirmed answers are captured. Let the customer review and correct the summary through chat before confirming submission; never infer missing values or silently create an order.
+- [ ] Preserve menu selections, demo-only synthetic or anonymized data, no prices during intake, and owner/kitchen data isolation. Save a confirmed complete request through the existing protected submission flow and show clear errors, duplicate protection, and an honest confirmation; no real customer email or payment is added.
+- [ ] Improve perceived and actual responsiveness by preparing the conversation earlier when appropriate, streaming responses, and avoiding unnecessary work without weakening conversation privacy. Show useful loading, cancellation, and connection errors; response time still depends on the agent service.
+- [ ] Match the inquiry popup and chat background to the main website’s existing background, maintaining readable contrast and mobile accessibility. Add an **Admin login** link in the footer to the existing staff sign-in page.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
