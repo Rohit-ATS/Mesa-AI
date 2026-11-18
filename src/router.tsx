@@ -8,6 +8,7 @@ import Settings from "./pages/Settings";
 import MenuAdmin from "./pages/MenuAdmin";
 import Export from "./pages/Export";
 import NotFound from "./pages/NotFound";
+import StaffLogin from "./pages/StaffLogin";
 
 export const routers = [
   {
@@ -19,6 +20,7 @@ export const routers = [
   { path: "/context", name: "context", element: <Context /> },
   { path: "/owner", name: "owner", element: <OwnerInbox /> },
   { path: "/kitchen", name: "kitchen", element: <Kitchen /> },
+  { path: "/staff-login", name: "staff-login", element: <StaffLogin /> },
   { path: "/emails", name: "emails", element: <Emails /> },
   { path: "/crm", name: "crm", element: <Crm /> },
   { path: "/settings", name: "settings", element: <Settings /> },
