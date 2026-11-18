@@ -104,6 +104,17 @@ Redesign the public one-page experience for La Bandera Kitchen so it feels like 
 - [ ] Simplify the customer-facing journey and make the current inquiry preview and its limitations clear. Preserve selected dishes, the request summary, and the disabled submission state; do not imply that the agent or real submissions are connected when they are not.
 - [ ] Keep this change focused on the public landing and intake page. Preserve staff pages, data, security rules, and existing backend connections; do not introduce a live photo feed, payments, or customer messaging.
 
+## Current focus: reference-inspired public theme
+
+Adapt the supplied screenshots’ vintage restaurant look to La Bandera Kitchen: warm cream, deep red, bold slab-serif headlines, compact uppercase navigation, arched food photography, simple product cards, and generous spacing. Keep the existing color family the user likes, with La Bandera’s own Dominican catering identity rather than the reference restaurant’s branding or pizza content.
+
+- [ ] Rebuild the public landing page with a centered, oversized La Bandera headline, a welcoming food-led hero, a simple navigation, a red statement strip, featured dishes, menu categories, and a short catering story and footer inspired by the reference.
+- [ ] Replace the reference’s shopping bag with an **Inquiry** action that leads to the existing request experience and reflects selected dishes where appropriate. Keep menu items and service details connected to the existing data, preserve selections, and show no prices during intake.
+- [ ] Use appropriately optimized Dominican food imagery and La Bandera branding. Do not imply illustrative imagery is a photograph of the actual business; do not invent storefronts, locations, contact details, or business history. Prioritize responsive loading and accessibility.
+- [ ] Retain restrained animation and clear mobile and keyboard behavior, including reduced-motion support. Preserve existing public interactions and keep the currently disconnected intake and disabled submission honestly labeled; this visual change does not connect the AI agent.
+- [ ] Do not add a “Build with Enter” watermark to the site. A platform-provided badge, if present outside the site code, may depend on publishing settings and cannot be promised removed by a visual redesign.
+- [ ] Limit the redesign to the public landing and inquiry experience; preserve owner, kitchen, CRM, data, permissions, and existing connections.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
