@@ -25,7 +25,7 @@ export function CateringMenu({ chosen, onToggle }: { chosen: string[]; onToggle:
     void load(); return () => { active = false; };
   }, []);
   const visible = items.filter(item => item.category === category);
-  return <section id="menu" className="landing-menu"><div className="landing-menu-inner"><div className="landing-menu-heading"><div><div className="landing-section-label">A LITTLE TASTE OF HOME</div><h2>Made for the table.</h2></div><a href="#inquiry" className="landing-menu-view">PLAN YOUR GATHERING ↗</a></div>
+  return <section id="menu" className="landing-menu"><div className="landing-menu-inner"><div className="landing-menu-heading"><div><div className="landing-section-label">A LITTLE TASTE OF HOME</div><h2>Made for the table.</h2></div><a href="#inquiry" className="landing-menu-view">PLAN YOUR GATHERING <ArrowUpRight size={14} className="inline-block align-middle" aria-hidden="true"/></a></div>
     {loading ? <p className="landing-menu-state">Loading menu…</p> : error ? <p role="alert" className="landing-menu-state">{error}</p> : <>
       <div className="landing-menu-top"><div><h3>Pick your favorites.</h3></div><p>Choose a dish to add it to your request. You can change your mind anytime.</p></div>
       {featured && <div className="landing-callout" role="note"><UtensilsCrossed size={22} aria-hidden="true"/><p><strong>{featured.name}</strong> — {featured.description}</p></div>}
