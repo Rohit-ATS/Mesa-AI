@@ -23,7 +23,7 @@ export function ReviewPanel({ details, chosen, missing, status, error, onEdit, o
           <DishChips chosen={chosen} onRemove={onRemoveDish} disabled={locked} />
           {!locked && <button type="button" className="iq-link iq-link-left" onClick={onAddDishes}>{chosen.length ? "Add more dishes from the menu" : "Choose dishes from the menu"}</button>}
         </div>
-        <p className="iq-muted">Demo only. Synthetic information is used, no prices are shown, and no email or payment is sent.</p>
+        <p className="iq-muted">Demo only. Synthetic information is used, no prices are shown, and no payment is taken. You will get a confirmation email only if the owner approves your request.</p>
         {status === "saved" && <p role="status" className="iq-success"><Check size={16} aria-hidden="true" />{SAVED_MESSAGE}</p>}
         {error && <p role="alert" className="iq-error"><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></p>}
         {blocked && !locked && <p id="iq-missing" className="iq-missing">Still needed: {missing.join(", ")}.</p>}

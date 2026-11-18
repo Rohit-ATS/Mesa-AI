@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { AlertCircle, Check, Minus, Plus } from "lucide-react";
 import {
-  DIETARY_CHIPS, MAX_DIETARY_LENGTH, MAX_GUESTS, NONE_CHIP, SERVICES, dietaryText, todayString,
+  DIETARY_CHIPS, EMAIL_PATTERN, MAX_DIETARY_LENGTH, MAX_GUESTS, NONE_CHIP, SERVICES, dietaryText, todayString,
   type Details, type StepKey,
 } from "./types";
 
@@ -40,6 +40,28 @@ function TextControl({ field, label, placeholder, maxLength, details, onSave, on
     <ControlForm onSubmit={submit}>
       <label htmlFor={id} className="iq-label">{label}</label>
       <input id={id} className="iq-input" value={value} maxLength={maxLength} placeholder={placeholder} autoFocus={autoFocus}
+        aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined}
+        onChange={event => { setValue(event.target.value); setError(""); }} />
+      <FieldError id={`${id}-error`} message={error} />
+      <Actions onCancel={onCancel} />
+    </ControlForm>
+  );
+}
+
+function EmailControl({ details, onSave, onCancel, autoFocus }: ControlProps) {
+  const id = useId();
+  const [value, setValue] = useState(details.email);
+  const [error, setError] = useState("");
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const trimmed = value.trim();
+    if (!EMAIL_PATTERN.test(trimmed) || trimmed.length > 254) { setError("Enter a valid email address, like name@example.com."); return; }
+    onSave("email", trimmed);
+  }
+  return (
+    <ControlForm onSubmit={submit}>
+      <label htmlFor={id} className="iq-label">Email</label>
+      <input id={id} type="email" autoComplete="email" className="iq-input" value={value} maxLength={254} placeholder="name@example.com" autoFocus={autoFocus}
         aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined}
         onChange={event => { setValue(event.target.value); setError(""); }} />
       <FieldError id={`${id}-error`} message={error} />
@@ -195,6 +217,7 @@ function DietaryControl({ details, onSave, onCancel, autoFocus }: ControlProps) 
 export function StepControl({ step, ...props }: ControlProps & { step: StepKey }) {
   switch (step) {
     case "name": return <TextControl {...props} field="name" label="Demo customer name" placeholder="Synthetic name" maxLength={120} />;
+    case "email": return <EmailControl {...props} />;
     case "date": return <DateControl {...props} />;
     case "time": return <TimeControl {...props} />;
     case "guests": return <GuestsControl {...props} />;

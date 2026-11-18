@@ -56,6 +56,7 @@ export function useInquiryDraft() {
         p_session: session,
         p_details: {
           name: details.name.trim(),
+          email: details.email.trim(),
           date: details.date,
           time: details.time,
           guests: details.guests,

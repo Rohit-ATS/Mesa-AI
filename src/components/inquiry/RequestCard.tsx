@@ -1,7 +1,7 @@
 import { Check, X } from "lucide-react";
 import { STEPS, capturedCount, dishLabel, displayValue, isCaptured, type Details, type StepKey } from "./types";
 
-export const SAVED_MESSAGE = "Saved as a demo inquiry. No email was sent.";
+export const SAVED_MESSAGE = "Request received. You will get a confirmation email if the owner approves it.";
 
 export function DishChips({ chosen, onRemove, disabled }: { chosen: string[]; onRemove: (name: string) => void; disabled: boolean }) {
   if (chosen.length === 0) return <p className="iq-muted">Choose dishes from the menu.</p>;

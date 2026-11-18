@@ -1,8 +1,9 @@
-export type StepKey = "name" | "date" | "time" | "guests" | "service" | "address" | "dietary";
+export type StepKey = "name" | "email" | "date" | "time" | "guests" | "service" | "address" | "dietary";
 export type ServiceStyle = "dropoff" | "setup" | "full_service";
 export type Dietary = { chips: string[]; other: string };
 export type Details = {
   name: string;
+  email: string;
   date: string;
   time: string;
   guests: number | null;
@@ -11,10 +12,11 @@ export type Details = {
   dietary: Dietary | null;
 };
 
-export const emptyDetails: Details = { name: "", date: "", time: "", guests: null, service: "", address: "", dietary: null };
+export const emptyDetails: Details = { name: "", email: "", date: "", time: "", guests: null, service: "", address: "", dietary: null };
 
 export const STEPS: ReadonlyArray<{ key: StepKey; label: string; missing: string; prompt: string }> = [
   { key: "name", label: "Name", missing: "name", prompt: "First, what name should go on this demo request? Please use a synthetic name." },
+  { key: "email", label: "Email", missing: "email", prompt: "What email should we use to confirm your booking?" },
   { key: "date", label: "Event date", missing: "event date", prompt: "What date is your gathering?" },
   { key: "time", label: "Event time", missing: "event time", prompt: "What time does it start?" },
   { key: "guests", label: "Guests", missing: "guest count", prompt: "How many guests are you expecting?" },
@@ -33,6 +35,7 @@ export const NONE_CHIP = "None";
 export const DIETARY_CHIPS = [NONE_CHIP, "Vegetarian", "Vegan", "Gluten-free", "Dairy-free", "Nut allergy"] as const;
 export const MAX_DIETARY_LENGTH = 250;
 export const MAX_GUESTS = 10000;
+export const EMAIL_PATTERN = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 export function todayString() {
   const now = new Date();
@@ -50,6 +53,7 @@ export function dietaryText(dietary: Dietary | null) {
 export function isCaptured(details: Details, key: StepKey) {
   switch (key) {
     case "name": return details.name.trim().length > 0;
+    case "email": return EMAIL_PATTERN.test(details.email.trim());
     case "date": return details.date.length > 0;
     case "time": return details.time.length > 0;
     case "guests": return details.guests !== null;
@@ -73,6 +77,7 @@ function formatTime(value: string) {
 export function displayValue(details: Details, key: StepKey) {
   switch (key) {
     case "name": return details.name.trim();
+    case "email": return details.email.trim();
     case "date": return formatDate(details.date);
     case "time": return formatTime(details.time);
     case "guests": return details.guests === 1 ? "1 guest" : `${details.guests} guests`;
