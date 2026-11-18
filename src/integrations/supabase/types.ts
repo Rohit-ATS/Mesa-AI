@@ -3300,6 +3300,138 @@ export type Database = {
         }
         Relationships: []
       }
+      ingredient: {
+        Row: {
+          cost_data_label: string
+          id: string
+          last_updated: string
+          name: string
+          supplier: string | null
+          unit: string
+          unit_cost_usd: number
+          waste_pct: number
+        }
+        Insert: {
+          cost_data_label?: string
+          id?: string
+          last_updated?: string
+          name: string
+          supplier?: string | null
+          unit: string
+          unit_cost_usd: number
+          waste_pct?: number
+        }
+        Update: {
+          cost_data_label?: string
+          id?: string
+          last_updated?: string
+          name?: string
+          supplier?: string | null
+          unit?: string
+          unit_cost_usd?: number
+          waste_pct?: number
+        }
+        Relationships: []
+      }
+      menu_item: {
+        Row: {
+          active: boolean
+          base_yield_servings: number | null
+          category: string
+          dietary_tags: string[]
+          id: string
+          is_upsell: boolean
+          name_en: string
+          name_es: string
+          portion_size_oz: number | null
+          serving_description: string | null
+        }
+        Insert: {
+          active?: boolean
+          base_yield_servings?: number | null
+          category: string
+          dietary_tags?: string[]
+          id?: string
+          is_upsell?: boolean
+          name_en: string
+          name_es: string
+          portion_size_oz?: number | null
+          serving_description?: string | null
+        }
+        Update: {
+          active?: boolean
+          base_yield_servings?: number | null
+          category?: string
+          dietary_tags?: string[]
+          id?: string
+          is_upsell?: boolean
+          name_en?: string
+          name_es?: string
+          portion_size_oz?: number | null
+          serving_description?: string | null
+        }
+        Relationships: []
+      }
+      menu_package: {
+        Row: {
+          description: string
+          id: string
+          is_default: boolean
+          name: string
+        }
+        Insert: {
+          description: string
+          id?: string
+          is_default?: boolean
+          name: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      menu_package_component: {
+        Row: {
+          category_choice: string | null
+          id: string
+          menu_item_id: string | null
+          package_id: string
+          quantity: number
+        }
+        Insert: {
+          category_choice?: string | null
+          id?: string
+          menu_item_id?: string | null
+          package_id: string
+          quantity?: number
+        }
+        Update: {
+          category_choice?: string | null
+          id?: string
+          menu_item_id?: string | null
+          package_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_package_component_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_package_component_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "menu_package"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_staff: {
         Row: {
           role: string
@@ -3312,6 +3444,66 @@ export type Database = {
         Update: {
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      recipe_line: {
+        Row: {
+          id: string
+          ingredient_id: string
+          menu_item_id: string
+          qty_per_serving: number
+          unit: string
+        }
+        Insert: {
+          id?: string
+          ingredient_id: string
+          menu_item_id: string
+          qty_per_serving: number
+          unit: string
+        }
+        Update: {
+          id?: string
+          ingredient_id?: string
+          menu_item_id?: string
+          qty_per_serving?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_line_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_line_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_package: {
+        Row: {
+          description: string
+          id: string
+          name: string
+          service_style: string
+        }
+        Insert: {
+          description: string
+          id?: string
+          name: string
+          service_style: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          name?: string
+          service_style?: string
         }
         Relationships: []
       }
