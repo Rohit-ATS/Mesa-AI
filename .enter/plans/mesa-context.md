@@ -94,6 +94,16 @@ Make the previously requested catering workflow usable end to end, then add the 
 - [ ] Preserve and verify the three-audience rule: customers never see costs or margins; kitchen users can access approved operational information only and cannot select financial fields; owners retain full access. Do not weaken authentication to enable a demonstration. Owner and kitchen account assignments still require authorized verified accounts.
 - [ ] Preserve existing CRM, context, email previews, stored benchmark dates, and synthetic demo scenarios. Complete the relevant end-to-end and role-access checks where authorized accounts and necessary services are available, and report any blocked or unverified behavior.
 
+## Current focus: landing-page redesign
+
+Redesign the public one-page experience for La Bandera Kitchen so it feels like a distinctive Dominican catering brand, not a generic software dashboard. Research references include Awwwards’ Restaurant GEM and Flavori examples for restrained motion and hospitality-focused presentation; the result will be an original design, not a copy. “Real-time photos” is interpreted as vivid, realistic food imagery—not a live camera feed. In the absence of supplied restaurant photos, any illustrative imagery will not be presented as actual photographs of the business or its dishes.
+
+- [ ] Create a compelling, image-led hero with a clear catering message and one obvious next step, using the established crimson, navy, and cream identity in a more editorial, food-first composition.
+- [ ] Rework the live menu into a distinctive, easy-to-browse experience with useful category navigation, clear dish information, and responsive motion. Preserve the existing real menu data and selection behavior; do not show prices during intake or invent dishes.
+- [ ] Add purposeful entrance, scroll, and interaction effects that enhance the experience without obscuring content or making it difficult to use. Respect reduced-motion preferences and keep the page responsive and usable on mobile and with a keyboard.
+- [ ] Simplify the customer-facing journey and make the current inquiry preview and its limitations clear. Preserve selected dishes, the request summary, and the disabled submission state; do not imply that the agent or real submissions are connected when they are not.
+- [ ] Keep this change focused on the public landing and intake page. Preserve staff pages, data, security rules, and existing backend connections; do not introduce a live photo feed, payments, or customer messaging.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
