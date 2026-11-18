@@ -1,0 +1,6 @@
+CREATE TABLE public.cost_setting (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), key text NOT NULL UNIQUE, value_numeric numeric, unit text NOT NULL, description text NOT NULL, editable boolean NOT NULL DEFAULT true);
+ALTER TABLE public.cost_setting ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owner reads cost settings" ON public.cost_setting FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner'));
+CREATE POLICY "owner updates editable cost settings" ON public.cost_setting FOR UPDATE TO authenticated USING (editable AND EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner')) WITH CHECK (editable AND EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner'));
+REVOKE UPDATE ON public.cost_setting FROM authenticated;
+GRANT UPDATE (value_numeric) ON public.cost_setting TO authenticated;

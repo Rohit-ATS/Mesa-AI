@@ -3285,6 +3285,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_setting: {
+        Row: {
+          description: string
+          editable: boolean
+          id: string
+          key: string
+          unit: string
+          value_numeric: number | null
+        }
+        Insert: {
+          description: string
+          editable?: boolean
+          id?: string
+          key: string
+          unit: string
+          value_numeric?: number | null
+        }
+        Update: {
+          description?: string
+          editable?: boolean
+          id?: string
+          key?: string
+          unit?: string
+          value_numeric?: number | null
+        }
+        Relationships: []
+      }
       health_check: {
         Row: {
           id: number
