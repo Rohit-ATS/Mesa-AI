@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { DeclinedList, type DeclinedInquiry } from "@/components/DeclinedList";
 
 type Customer = { id: string; name: string; email: string | null; phone: string | null; org_type: string | null; notes: string | null };
 type Order = { id: string; event_date: string | null; guest_count: number | null; service_style: string | null; status: string; quote: { version: number; status: string; recommended_price: number | null }[] };
@@ -23,6 +24,7 @@ export default function Crm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [noteMessage, setNoteMessage] = useState("");
+  const [declined, setDeclined] = useState<DeclinedInquiry[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -33,10 +35,14 @@ export default function Crm() {
       const { data: staff, error: staffError } = await supabase.from("mesa_staff").select("role").eq("user_id", auth.session.user.id).maybeSingle();
       if (!active) return;
       if (staffError || staff?.role !== "owner") { setError("This account does not have owner access."); setLoading(false); return; }
-      const { data, error: customerError } = await supabase.from("customer").select("id,name,email,phone,org_type,notes").order("name");
+      const [{ data, error: customerError }, declinedResult] = await Promise.all([
+        supabase.from("customer").select("id,name,email,phone,org_type,notes").order("name"),
+        supabase.from("inquiry").select("id,event_date,guest_count,service_style,customer(id,name),mesa_inquiry_decision(decided_at)").eq("status", "declined").order("created_at", { ascending: false }),
+      ]);
       if (!active) return;
       if (customerError) setError("Customers could not be loaded. Please try again.");
       else setCustomers(data || []);
+      if (!declinedResult.error) setDeclined((declinedResult.data || []) as DeclinedInquiry[]);
       setLoading(false);
     }
     void load();
@@ -95,6 +101,7 @@ export default function Crm() {
         {!selected ? <section className="rounded-xl border border-border bg-card p-10"><UserRound size={24} className="text-primary"/><h2 className="mt-4 font-display text-2xl text-secondary">Select a customer</h2><p className="mt-2 text-sm text-muted-foreground">Choose a customer to see their details and order history.</p></section> : <div className="space-y-6"><section className="rounded-xl border border-border bg-card p-6 sm:p-8"><div className="eyebrow">CUSTOMER PROFILE</div><h2 className="mt-3 font-display text-3xl text-secondary">{selected.name}</h2><p className="mt-2 text-sm capitalize text-muted-foreground">{organization(selected.org_type)}</p><div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5 text-sm text-muted-foreground"><span className="flex items-center gap-2"><Mail size={16} className="text-primary"/>{selected.email || "Email not provided"}</span><span className="flex items-center gap-2"><Phone size={16} className="text-primary"/>{selected.phone || "Phone not provided"}</span></div><div className="mt-7"><label htmlFor="customer-notes" className="text-sm font-semibold text-secondary">Notes</label><Textarea id="customer-notes" value={notes} onChange={event => { setNotes(event.target.value); setNoteMessage(""); }} placeholder="Add notes about this customer" rows={5} className="mt-2"/><div className="mt-3 flex items-center gap-4"><Button onClick={saveNotes} disabled={saving || notes === (selected.notes || "")}>{saving ? "Saving…" : "Save notes"}</Button><span role="status" className="text-sm text-muted-foreground">{noteMessage}</span></div></div></section>
         <section className="overflow-hidden rounded-xl border border-border bg-card"><div className="p-6 sm:px-8"><div className="eyebrow">PAST & UPCOMING</div><h2 className="mt-3 font-display text-2xl text-secondary">Order history</h2></div>{error && <p role="alert" className="px-6 pb-5 text-sm text-destructive">{error}</p>}{ordersLoading ? <p className="px-6 pb-6 text-sm text-muted-foreground">Loading order history…</p> : <div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left"><thead className="bg-accent text-xs uppercase tracking-wider text-muted-foreground"><tr><th className="px-6 py-4">Date</th><th className="px-4 py-4">Guests</th><th className="px-4 py-4">Service style</th><th className="px-4 py-4">Total</th><th className="px-4 py-4">Status</th></tr></thead><tbody>{orders.map(order => { const latest = [...order.quote].sort((a,b) => b.version - a.version)[0]; return <tr key={order.id} className="border-t border-border text-sm"><td className="px-6 py-4">{order.event_date || "Not set"}</td><td className="px-4 py-4">{order.guest_count ?? "—"}</td><td className="px-4 py-4 capitalize">{order.service_style?.replaceAll("_", " ") || "Not set"}</td><td className="px-4 py-4">{latest?.recommended_price == null ? "—" : money(latest.recommended_price)}</td><td className="px-4 py-4 capitalize">{order.status.replaceAll("_", " ")}</td></tr>; })}</tbody></table>{!orders.length && !error && <p className="p-6 text-sm text-muted-foreground">No orders yet.</p>}</div>}</section></div>}
       </div>}
+      {!loading && !(error && !selected) && <DeclinedList items={declined} onSelectCustomer={id => { const customer = customers.find(c => c.id === id); if (customer) { selectCustomer(customer); window.scrollTo({ top: 0, behavior: "smooth" }); } }} />}
     </div>
   </main>;
 }

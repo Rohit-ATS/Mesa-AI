@@ -1,0 +1,50 @@
+create or replace function public.mesa_decide_inquiry(p_inquiry_id uuid, p_decision text, p_customer_email text default null, p_quote jsonb default null)
+returns uuid
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare cur_status text; event_start timestamptz; guests integer; cust uuid; src public.quote%rowtype; next_version integer; new_quote uuid; v_prep_hours numeric; v_email text;
+begin
+  if not exists (select 1 from public.mesa_staff where user_id = auth.uid() and role = 'owner') then raise exception 'Owner access required'; end if;
+  if p_decision not in ('approved','declined') then raise exception 'Invalid decision'; end if;
+  select i.status, (i.event_date + i.event_time) at time zone 'America/Los_Angeles', i.guest_count, i.customer_id into cur_status, event_start, guests, cust from public.inquiry i where i.id = p_inquiry_id for update;
+  if not found then raise exception 'Inquiry not found'; end if;
+  if cur_status in ('approved','declined') then raise exception 'This inquiry was already %', cur_status; end if;
+
+  if p_decision = 'declined' then
+    update public.inquiry set status = 'declined' where id = p_inquiry_id;
+    insert into public.mesa_inquiry_decision (inquiry_id, decision, decided_by) values (p_inquiry_id, 'declined', auth.uid());
+    return null;
+  end if;
+
+  v_email := nullif(trim(coalesce(p_customer_email, '')), '');
+  if v_email is null or v_email !~ '^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$' or length(v_email) > 254 then raise exception 'A valid customer email is required'; end if;
+  if event_start is null or guests is null or guests < 1 then raise exception 'Event date, time and guest count are required'; end if;
+  if not exists (select 1 from public.order_line where inquiry_id = p_inquiry_id) then raise exception 'The order has no dishes'; end if;
+
+  select coalesce(max(version), 0) + 1 into next_version from public.quote where inquiry_id = p_inquiry_id;
+  if p_quote is not null then
+    insert into public.quote (inquiry_id,food_cost,labor_cost,overhead_cost,transport_cost,packaging_cost,tax,total_cost,recommended_price,margin_pct,price_per_guest,competitor_low,competitor_high,competitor_percentile,assumptions_json,version,status)
+    values (p_inquiry_id,(p_quote->>'food_cost')::numeric,(p_quote->>'labor_cost')::numeric,(p_quote->>'overhead_cost')::numeric,(p_quote->>'transport_cost')::numeric,(p_quote->>'packaging_cost')::numeric,(p_quote->>'tax')::numeric,(p_quote->>'total_cost')::numeric,(p_quote->>'recommended_price')::numeric,(p_quote->>'margin_pct')::numeric,(p_quote->>'price_per_guest')::numeric,(p_quote->>'competitor_low')::numeric,(p_quote->>'competitor_high')::numeric,(p_quote->>'competitor_percentile')::numeric,jsonb_build_object('assumptions',p_quote->'assumptions','quote_inputs',p_quote->'quote_inputs'),next_version,'approved') returning id into new_quote;
+  else
+    select * into src from public.quote where inquiry_id = p_inquiry_id order by version desc limit 1;
+    if found then
+      insert into public.quote (inquiry_id,food_cost,labor_cost,overhead_cost,transport_cost,packaging_cost,tax,total_cost,recommended_price,margin_pct,price_per_guest,competitor_low,competitor_high,competitor_percentile,assumptions_json,version,status)
+      values (p_inquiry_id,src.food_cost,src.labor_cost,src.overhead_cost,src.transport_cost,src.packaging_cost,src.tax,src.total_cost,src.recommended_price,src.margin_pct,src.price_per_guest,src.competitor_low,src.competitor_high,src.competitor_percentile,src.assumptions_json,next_version,'approved') returning id into new_quote;
+    end if;
+  end if;
+
+  -- Prep lead time from the owner's cost settings: base hours + minutes per guest.
+  select coalesce((select value_numeric from public.cost_setting where key = 'base_prep_hours'), 2)
+       + guests * coalesce((select value_numeric from public.cost_setting where key = 'prep_min_per_guest'), 0) / 60.0 into v_prep_hours;
+  if not exists (select 1 from public.prep_task where inquiry_id = p_inquiry_id) then
+    insert into public.prep_task (inquiry_id, menu_item_id, qty_servings, prep_notes, due_at)
+    select p_inquiry_id, o.menu_item_id, o.qty_servings, o.note, event_start - (v_prep_hours * interval '1 hour') from public.order_line o where o.inquiry_id = p_inquiry_id;
+  end if;
+
+  update public.customer set email = v_email where id = cust;
+  update public.inquiry set status = 'approved' where id = p_inquiry_id;
+  insert into public.mesa_inquiry_decision (inquiry_id, decision, decided_by, customer_email) values (p_inquiry_id, 'approved', auth.uid(), v_email);
+  return new_quote;
+end $$;

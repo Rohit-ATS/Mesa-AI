@@ -3806,6 +3806,44 @@ export type Database = {
           },
         ]
       }
+      mesa_inquiry_decision: {
+        Row: {
+          customer_email: string | null
+          decided_at: string
+          decided_by: string | null
+          decision: string
+          email_error: string | null
+          email_status: string | null
+          inquiry_id: string
+        }
+        Insert: {
+          customer_email?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          decision: string
+          email_error?: string | null
+          email_status?: string | null
+          inquiry_id: string
+        }
+        Update: {
+          customer_email?: string | null
+          decided_at?: string
+          decided_by?: string | null
+          decision?: string
+          email_error?: string | null
+          email_status?: string | null
+          inquiry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_inquiry_decision_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_intake_threads: {
         Row: {
           agent_id: string
@@ -4076,6 +4114,15 @@ export type Database = {
     Functions: {
       mesa_approve_quote: {
         Args: { p_inquiry_id: string; p_prep_hours: number; p_quote: Json }
+        Returns: string
+      }
+      mesa_decide_inquiry: {
+        Args: {
+          p_customer_email?: string
+          p_decision: string
+          p_inquiry_id: string
+          p_quote?: Json
+        }
         Returns: string
       }
       mesa_is_approved_inquiry: { Args: { p_id: string }; Returns: boolean }
