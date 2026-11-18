@@ -124,6 +124,8 @@ async function askAI(token: string, instruction: string, data: unknown) {
   return text;
 }
 
+// Untyped database rows from joined selects in this Deno function (no generated types available here).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function run(db: SupabaseClient, inquiryId: string, origin: string | null) {
