@@ -3678,6 +3678,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mesa_demo_submissions: {
+        Row: {
+          created_at: string
+          inquiry_id: string
+          thread_id: string
+        }
+        Insert: {
+          created_at?: string
+          inquiry_id: string
+          thread_id: string
+        }
+        Update: {
+          created_at?: string
+          inquiry_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_demo_submissions_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_demo_submissions_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: true
+            referencedRelation: "mesa_intake_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_intake_threads: {
         Row: {
           agent_id: string
@@ -3957,6 +3990,10 @@ export type Database = {
       }
       mesa_kitchen_orders: { Args: never; Returns: Json }
       mesa_owner_metrics: { Args: never; Returns: Json }
+      mesa_submit_demo_inquiry: {
+        Args: { p_details: Json; p_dishes: string[]; p_session: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

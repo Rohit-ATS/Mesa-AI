@@ -1,0 +1,22 @@
+CREATE TABLE public.mesa_demo_submissions (thread_id uuid PRIMARY KEY REFERENCES public.mesa_intake_threads(id), inquiry_id uuid NOT NULL UNIQUE REFERENCES public.inquiry(id), created_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE public.mesa_demo_submissions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.mesa_demo_submissions FROM anon, authenticated;
+CREATE FUNCTION public.mesa_submit_demo_inquiry(p_session text, p_details jsonb, p_dishes text[]) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,extensions AS $$
+DECLARE t_id uuid; existing uuid; customer_id_new uuid; inquiry_id_new uuid; guest integer; dish_count integer;
+BEGIN
+ IF p_session !~ '^[a-f0-9]{64}$' OR p_details IS NULL OR p_dishes IS NULL OR array_length(p_dishes,1) IS NULL OR array_length(p_dishes,1)>25 THEN RAISE EXCEPTION 'Invalid request'; END IF;
+ SELECT id INTO t_id FROM public.mesa_intake_threads WHERE session_hash=encode(extensions.digest(p_session,'sha256'),'hex') AND agent_id='5c072189-22b5-4cf5-bfed-d02903f578b6' FOR UPDATE;
+ IF t_id IS NULL THEN RAISE EXCEPTION 'Start the intake conversation before submitting'; END IF;
+ SELECT inquiry_id INTO existing FROM public.mesa_demo_submissions WHERE thread_id=t_id; IF existing IS NOT NULL THEN RETURN existing; END IF;
+ IF COALESCE(length(trim(p_details->>'name')),0)=0 OR length(p_details->>'name')>120 OR COALESCE(length(trim(p_details->>'address')),0)=0 OR length(p_details->>'address')>250 OR COALESCE(length(trim(p_details->>'dietary')),0)=0 OR length(p_details->>'dietary')>250 OR p_details->>'service' NOT IN ('dropoff','setup','full_service') THEN RAISE EXCEPTION 'Complete all required fields'; END IF;
+ guest:=(p_details->>'guests')::integer; IF guest<1 OR guest>10000 OR (p_details->>'date')::date IS NULL OR (p_details->>'time')::time IS NULL THEN RAISE EXCEPTION 'Invalid event details'; END IF;
+ SELECT count(*) INTO dish_count FROM public.menu_item WHERE active AND name_es=ANY(p_dishes); IF dish_count<>array_length(p_dishes,1) THEN RAISE EXCEPTION 'Invalid menu selection'; END IF;
+ INSERT INTO public.customer(name,org_type) VALUES ('Demo · ' || trim(p_details->>'name'),NULL) RETURNING id INTO customer_id_new;
+ INSERT INTO public.inquiry(customer_id,raw_text,channel,event_date,event_time,guest_count,service_style,venue_address,dietary_flags,completeness_score,missing_fields,status) VALUES (customer_id_new,'Synthetic demo inquiry submitted through intake.','demo',(p_details->>'date')::date,(p_details->>'time')::time,guest,p_details->>'service',trim(p_details->>'address'),ARRAY[trim(p_details->>'dietary')],100,ARRAY[]::text[],'new') RETURNING id INTO inquiry_id_new;
+ INSERT INTO public.order_line(inquiry_id,menu_item_id,qty_servings) SELECT inquiry_id_new,id,guest FROM public.menu_item WHERE active AND name_es=ANY(p_dishes);
+ INSERT INTO public.inquiry_metrics_context(inquiry_id,dietary_confirmed,synthetic_demo) VALUES (inquiry_id_new,true,true);
+ INSERT INTO public.mesa_demo_submissions(thread_id,inquiry_id) VALUES (t_id,inquiry_id_new);
+ RETURN inquiry_id_new;
+END $$;
+REVOKE ALL ON FUNCTION public.mesa_submit_demo_inquiry(text,jsonb,text[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.mesa_submit_demo_inquiry(text,jsonb,text[]) TO anon,authenticated;
