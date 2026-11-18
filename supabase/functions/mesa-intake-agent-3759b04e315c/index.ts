@@ -4,7 +4,7 @@ const agent="5c072189-22b5-4cf5-bfed-d02903f578b6";
 const fail=(status:number,message:string)=>new Response(JSON.stringify({message}),{status,headers:{...cors,"Content-Type":"application/json"}});
 Deno.serve(async req=>{
  if(req.method==="OPTIONS")return new Response(null,{headers:cors});
- const session=req.headers.get("x-intake-session")||"";
+ const session=req.headers.get("x-intake-session") || (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
  if(!/^[a-f0-9]{64}$/.test(session))return fail(401,"Invalid conversation session.");
  const key=Deno.env.get("ENTER_API_KEY_3759B04E"),url=Deno.env.get("SUPABASE_URL"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  if(!key||!url||!service)return fail(503,"Intake assistant is unavailable.");
