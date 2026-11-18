@@ -9,7 +9,7 @@ const MIN_STAFF_OR_VEHICLES = 1;
 export type QuoteInquiry = { guest_count: number; service_style: "dropoff" | "setup" | "full_service"; distance_mi: number; event_duration_hours: number };
 export type QuoteOrderLine = { menu_item_id: string; qty_servings: number; recipe_lines: { qty_per_serving: number; unit: string; ingredient: { unit: string; unit_cost_usd: number; waste_pct: number | null } }[] };
 export type CostSetting = { key: string; value_numeric: number | null };
-export type CompetitorBenchmark = { business_name: string; researched_on: string; min_guests: number | null; price_per_guest_dropoff: number | null; price_per_guest_full_service: number | null };
+export type CompetitorBenchmark = { business_name: string; researched_on: string; min_guests: number | null; price_per_guest_dropoff: number | null; price_per_guest_full_service: number | null; source_url?: string | null; minimum_order_notes?: string | null; transport_notes?: string | null; price_notes?: string | null };
 export type QuoteSettings = { cost_settings: CostSetting[]; competitor_benchmarks: CompetitorBenchmark[] };
 
 export function computeQuote(inquiry: QuoteInquiry, orderLines: QuoteOrderLine[], settings: QuoteSettings) {

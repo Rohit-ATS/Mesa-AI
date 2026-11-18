@@ -3291,30 +3291,39 @@ export type Database = {
           city: string
           id: string
           min_guests: number | null
+          minimum_order_notes: string | null
+          price_notes: string | null
           price_per_guest_dropoff: number | null
           price_per_guest_full_service: number | null
           researched_on: string
           source_url: string | null
+          transport_notes: string | null
         }
         Insert: {
           business_name: string
           city: string
           id?: string
           min_guests?: number | null
+          minimum_order_notes?: string | null
+          price_notes?: string | null
           price_per_guest_dropoff?: number | null
           price_per_guest_full_service?: number | null
           researched_on: string
           source_url?: string | null
+          transport_notes?: string | null
         }
         Update: {
           business_name?: string
           city?: string
           id?: string
           min_guests?: number | null
+          minimum_order_notes?: string | null
+          price_notes?: string | null
           price_per_guest_dropoff?: number | null
           price_per_guest_full_service?: number | null
           researched_on?: string
           source_url?: string | null
+          transport_notes?: string | null
         }
         Relationships: []
       }

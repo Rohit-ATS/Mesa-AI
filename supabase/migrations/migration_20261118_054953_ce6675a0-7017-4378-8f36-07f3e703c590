@@ -1,0 +1,1 @@
+ALTER TABLE public.competitor_benchmark ADD COLUMN minimum_order_notes text, ADD COLUMN transport_notes text, ADD COLUMN price_notes text;
