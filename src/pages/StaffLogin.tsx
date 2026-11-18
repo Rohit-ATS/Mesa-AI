@@ -1,5 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-export default function StaffLogin(){const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);const navigate=useNavigate();async function signIn(e:React.FormEvent){e.preventDefault();setBusy(true);setMessage("");const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error||!data.user){setMessage(error?.message||"Sign in failed.");setBusy(false);return;}const {data:staff,error:roleError}=await supabase.from("mesa_staff").select("role").eq("user_id",data.user.id).maybeSingle();if(roleError||staff?.role!=="kitchen"){setMessage("This account does not have kitchen access.");setBusy(false);return;}navigate("/kitchen");}
-return <main className="min-h-screen bg-background px-6 py-12"><div className="mx-auto max-w-md"><Link to="/" className="font-display text-xl font-bold text-secondary">la bandera <span className="text-primary">kitchen</span></Link><div className="mt-12 rounded-xl border border-border bg-card p-7"><div className="eyebrow">KITCHEN / MESA</div><h1 className="mt-3 font-display text-3xl text-secondary">Staff sign in</h1><p className="mt-3 text-sm text-muted-foreground">Sign in with an assigned kitchen account.</p><form onSubmit={signIn} className="mt-6 space-y-4"><label className="block text-sm">Email<input required autoComplete="username" type="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-2 w-full rounded-lg border border-input bg-background p-3"/></label><label className="block text-sm">Password<input required autoComplete="current-password" type="password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-2 w-full rounded-lg border border-input bg-background p-3"/></label>{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<button disabled={busy} className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">{busy?"Signing in…":"Sign in"}</button></form></div></div></main>}
+import StaffSignInForm from "@/components/StaffSignInForm";
+import { getCurrentStaff, roleHome } from "@/lib/staffAuth";
+
+export default function StaffLogin() {
+  const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+  const [signedInEmail, setSignedInEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentStaff().then(({ email, role }) => {
+      if (role) { navigate(roleHome[role], { replace: true }); return; }
+      setSignedInEmail(email);
+      setChecking(false);
+    });
+  }, [navigate]);
+
+  async function signOut() { await supabase.auth.signOut(); setSignedInEmail(null); }
+
+  return (
+    <main className="min-h-screen bg-background px-6 py-12">
+      <div className="mx-auto max-w-md">
+        <Link to="/" className="font-display text-xl font-bold text-secondary">la bandera <span className="text-primary">kitchen</span></Link>
+        <div className="mt-12 rounded-xl border border-border bg-card p-7">
+          <div className="eyebrow">MESA / STAFF</div>
+          <h1 className="mt-3 font-display text-3xl text-secondary">Staff sign in</h1>
+          <p className="mt-3 text-sm text-muted-foreground">One sign-in for owner and kitchen accounts.</p>
+          <div className="mt-6">
+            {checking ? <p className="text-sm text-muted-foreground">Checking session…</p>
+              : signedInEmail ? <div className="space-y-4"><p role="alert" className="text-sm text-destructive">{signedInEmail} has no owner or kitchen access.</p><button onClick={signOut} className="rounded-lg border border-border px-5 py-3 text-sm">Sign out</button></div>
+              : <StaffSignInForm onSignedIn={role => navigate(roleHome[role], { replace: true })} />}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
