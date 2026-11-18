@@ -40,7 +40,7 @@ Supporting records will establish trusted staff roles and persistent packing che
 
 ## Current focus: owner quote detail
 
-This change focuses on the owner quote detail and its approval prerequisites; the wider application scope above remains in place but is not represented as already complete. The current app has a calculator and menu/settings data, but no inquiry, quote, preparation-task, or competitor records yet, and owner access still needs an authorized account assignment.
+This change focuses on the owner quote detail and its approval prerequisites; it does not add an AI workflow. The wider application scope above remains in place but is not represented as already complete. The current app has a calculator and menu/settings data, but no inquiry, quote, preparation-task, or competitor records yet, and owner access still needs an authorized account assignment.
 
 - [ ] Create an owner-only `/owner` quote detail experience with customer and event details, status, and compact order summary. Where no inquiry is available, show an honest empty state; use synthetic or anonymized data only.
 - [ ] Make the cost build-up the centerpiece: food, labor, overhead, transport, packaging, and total, with calculator assumptions and a relevant numeric driving input for each adjustable component. Recalculate all dependent figures immediately on valid changes, animate changed values briefly, and show invalid or missing inputs without producing a misleading quote. Adjustments apply to the current quote, not silently to global defaults.
