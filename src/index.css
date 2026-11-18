@@ -1,30 +1,32 @@
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 42 56% 93%;
+    --foreground: 25 12% 18%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 40 50% 98%;
+    --card-foreground: 25 12% 18%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 40 50% 98%;
+    --popover-foreground: 25 12% 18%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 354 68% 39%;
+    --primary-foreground: 40 50% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 221 47% 20%;
+    --secondary-foreground: 40 50% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 40 35% 89%;
+    --muted-foreground: 24 9% 42%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 37 45% 91%;
+    --accent-foreground: 221 47% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -100,6 +102,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+.eyebrow { display: flex; align-items: center; gap: .75rem; color: hsl(var(--primary)); font-size: .7rem; font-weight: 700; letter-spacing: .2em; }
+.flag-mark { display: grid; grid-template-columns: repeat(2, 8px); grid-template-rows: repeat(2, 6px); gap: 2px; padding: 3px; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); }
+.flag-mark i:nth-child(1), .flag-mark i:nth-child(4) { background: hsl(var(--secondary)); }
+.flag-mark i:nth-child(2), .flag-mark i:nth-child(3) { background: hsl(var(--primary)); }
 
 html,
 body,

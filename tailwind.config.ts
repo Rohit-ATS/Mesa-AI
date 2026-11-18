@@ -19,6 +19,8 @@ export default {
 			}
 		},
 		extend: {
+            fontFamily: { display: ['Playfair Display', 'serif'], sans: ['DM Sans', 'sans-serif'] },
+            boxShadow: { soft: '0 15px 45px -20px hsl(var(--secondary) / 0.2)' },
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

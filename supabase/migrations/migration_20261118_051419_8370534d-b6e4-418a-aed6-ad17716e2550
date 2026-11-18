@@ -1,0 +1,15 @@
+CREATE TABLE public.mesa_staff (user_id uuid PRIMARY KEY REFERENCES auth.users(id), role text NOT NULL CHECK (role IN ('owner','kitchen')));
+ALTER TABLE public.mesa_staff ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "staff can read own role" ON public.mesa_staff FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE TABLE public.business_context (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), section text NOT NULL UNIQUE, content text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+ALTER TABLE public.business_context ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owner reads context" ON public.business_context FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id = auth.uid() AND role = 'owner'));
+CREATE POLICY "owner updates context" ON public.business_context FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id = auth.uid() AND role = 'owner')) WITH CHECK (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id = auth.uid() AND role = 'owner'));
+CREATE FUNCTION public.mesa_context_updated() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
+CREATE TRIGGER mesa_context_timestamp BEFORE UPDATE ON public.business_context FOR EACH ROW EXECUTE FUNCTION public.mesa_context_updated();
+INSERT INTO public.business_context (section,content) VALUES
+('business', 'La Bandera Kitchen. Oakland, CA. Authentic Dominican cuisine. Catering only, licensed commercial kitchen. Roadmap: catering -> food truck -> dine-in. Owner: Franklyn Rosario. Serves corporate functions, private celebrations, schools, nonprofits and community events across the SF Bay Area.'),
+('problem', 'A catering inquiry arrives as plain text. Today it is manually turned into a quote, then manually turned into kitchen instructions. Quotes target 24 hours. Costs are estimated by feel. The kitchen sometimes gets incomplete information, or information it should not see.'),
+('three_audience_rule', E'1. CUSTOMER sees menu, guided questions, confirmation, proposal, deposit receipt. Never sees cost or margin.\n2. OWNER sees everything: full cost build-up, margin, staffing plan, competitor band, approve/edit/send.\n3. KITCHEN sees dishes, quantities, recipes, dietary flags, prep and delivery times. NEVER sees any dollar figure.\nThis rule is enforced at the data layer, not only in the UI.'),
+('operating_numbers', 'Labor rate $22.00/hour (owner-stated). Kitchen rent $500/month (owner-stated). Staffing scales with guest count; 100-300 guest events need 2-3 additional prep staff plus on-site service staff for full service. Must account for taxes, transportation fees and a minimum wage floor. Cost estimation must be automatic, never manual entry.'),
+('demo_constraints', 'Synthetic or anonymized data only. No live payments, no real customer messaging, no production system access. Complements, does not replace, the owner''s existing development work.');
