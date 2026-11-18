@@ -3497,6 +3497,35 @@ export type Database = {
           },
         ]
       }
+      inquiry_metrics_context: {
+        Row: {
+          clarification_rounds: number | null
+          dietary_confirmed: boolean
+          inquiry_id: string
+          synthetic_demo: boolean
+        }
+        Insert: {
+          clarification_rounds?: number | null
+          dietary_confirmed?: boolean
+          inquiry_id: string
+          synthetic_demo?: boolean
+        }
+        Update: {
+          clarification_rounds?: number | null
+          dietary_confirmed?: boolean
+          inquiry_id?: string
+          synthetic_demo?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_metrics_context_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_item: {
         Row: {
           active: boolean
@@ -3842,6 +3871,7 @@ export type Database = {
         Returns: string
       }
       mesa_is_approved_inquiry: { Args: { p_id: string }; Returns: boolean }
+      mesa_owner_metrics: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never

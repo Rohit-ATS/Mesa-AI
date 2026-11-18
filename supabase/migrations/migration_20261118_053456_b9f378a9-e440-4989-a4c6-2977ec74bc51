@@ -1,0 +1,3 @@
+CREATE TABLE public.inquiry_metrics_context (inquiry_id uuid PRIMARY KEY REFERENCES public.inquiry(id), clarification_rounds integer CHECK (clarification_rounds >= 0), dietary_confirmed boolean NOT NULL DEFAULT false, synthetic_demo boolean NOT NULL DEFAULT false);
+ALTER TABLE public.inquiry_metrics_context ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owner manages inquiry metrics context" ON public.inquiry_metrics_context FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner')) WITH CHECK (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner'));
