@@ -115,6 +115,17 @@ Adapt the supplied screenshots’ vintage restaurant look to La Bandera Kitchen:
 - [ ] Do not add a “Build with Enter” watermark to the site. A platform-provided badge, if present outside the site code, may depend on publishing settings and cannot be promised removed by a visual redesign.
 - [ ] Limit the redesign to the public landing and inquiry experience; preserve owner, kitchen, CRM, data, permissions, and existing connections.
 
+## Current focus: connect intake to owner and kitchen workflows
+
+The agent chat responds, but it currently does not populate the request summary or submit an inquiry. As a result, no new owner quote or kitchen handoff is created. The owner quote calculator and approved-order kitchen screens already exist and will be reused.
+
+- [ ] Capture and display the customer's event details and selected dishes in the live request summary. Ask for missing information, avoid inventing values, show no intake prices, and let the customer review and confirm before submitting.
+- [ ] Save each confirmed demo inquiry, customer details, and order lines together, then show a truthful confirmation. Prevent duplicate submissions and explain errors without losing the customer's work. Continue to use synthetic or anonymized event data only.
+- [ ] Send a confirmation email only to an explicitly authorized team test address, not to actual customers or the business owner without his permission. Make clear whether the message was accepted, failed, or its outcome is unknown; a saved inquiry must not be falsely reported as failed if email delivery fails. The Gmail connection and delivery permissions must be available before this part can work.
+- [ ] Show the saved inquiry in the owner inbox and let the owner complete any missing details needed for a quote. Reuse the existing automatic cost calculation, draft and proposal preview; keep cost and margin visible only to the owner.
+- [ ] On owner approval, preserve the draft, create a separate approved quote, and generate the kitchen request and prep timeline. Show only approved operational data to kitchen staff, with no financial fields accessible to their queries. No actual customer proposal, payment, or customer message is sent in this demo.
+- [ ] Verify the complete flow with authorized owner and kitchen accounts, including confirmation-email behavior and direct role-access checks. If a required account or Gmail permission is unavailable, finish independent work and report the remaining steps as unverified rather than bypassing access.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
