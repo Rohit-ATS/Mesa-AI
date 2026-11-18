@@ -13,7 +13,9 @@
     "pInstall": "pnpm install"
   },
   "dependencies": {
+    "@enter-pro/agent-client": "0.0.2",
     "@enter-pro/analytics-sdk": "^0.0.10",
+    "@enter-pro/thread-client": "0.0.2",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

@@ -1,0 +1,20 @@
+CREATE TABLE public.kitchen_checklist (inquiry_id uuid NOT NULL REFERENCES public.inquiry(id), item_key text NOT NULL CHECK (item_key IN ('pans','utensils','dietary','labels','transport')), done boolean NOT NULL DEFAULT false, PRIMARY KEY(inquiry_id,item_key));
+ALTER TABLE public.kitchen_checklist ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "owner manages kitchen checklist" ON public.kitchen_checklist FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner')) WITH CHECK (EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='owner'));
+CREATE FUNCTION public.mesa_kitchen_orders() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+DECLARE result jsonb;
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='kitchen') THEN RAISE EXCEPTION 'Kitchen access required'; END IF;
+ SELECT COALESCE(jsonb_agg(jsonb_build_object('id',i.id,'event_date',i.event_date,'event_time',i.event_time,'venue_area',i.venue_zip,'guest_count',i.guest_count,'dietary_flags',i.dietary_flags,'dietary_confirmed',coalesce(mc.dietary_confirmed,false),'dishes',COALESCE((SELECT jsonb_agg(jsonb_build_object('name_es',m.name_es,'name_en',m.name_en,'servings',o.qty_servings,'batch_yield',m.base_yield_servings,'recipe',COALESCE((SELECT jsonb_agg(jsonb_build_object('name',ing.name,'qty',r.qty_per_serving * o.qty_servings,'unit',r.unit)) FROM public.recipe_line r JOIN public.ingredient ing ON ing.id=r.ingredient_id WHERE r.menu_item_id=m.id),'[]'::jsonb))) FROM public.order_line o JOIN public.menu_item m ON m.id=o.menu_item_id WHERE o.inquiry_id=i.id),'[]'::jsonb),'timeline',COALESCE((SELECT jsonb_agg(jsonb_build_object('dish',m.name_es,'due_at',t.due_at) ORDER BY t.due_at) FROM public.prep_task t JOIN public.menu_item m ON m.id=t.menu_item_id WHERE t.inquiry_id=i.id),'[]'::jsonb),'checklist',COALESCE((SELECT jsonb_object_agg(c.item_key,c.done) FROM public.kitchen_checklist c WHERE c.inquiry_id=i.id),'{}'::jsonb)) ORDER BY i.event_date,i.event_time),'[]'::jsonb) INTO result FROM public.inquiry i LEFT JOIN public.inquiry_metrics_context mc ON mc.inquiry_id=i.id WHERE i.status='approved';
+ RETURN result;
+END $$;
+REVOKE ALL ON FUNCTION public.mesa_kitchen_orders() FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.mesa_kitchen_orders() TO authenticated;
+CREATE FUNCTION public.mesa_kitchen_check(p_inquiry uuid,p_key text,p_done boolean) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.mesa_staff WHERE user_id=auth.uid() AND role='kitchen') THEN RAISE EXCEPTION 'Kitchen access required'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM public.inquiry WHERE id=p_inquiry AND status='approved') THEN RAISE EXCEPTION 'Approved order required'; END IF;
+ INSERT INTO public.kitchen_checklist (inquiry_id,item_key,done) VALUES (p_inquiry,p_key,p_done) ON CONFLICT (inquiry_id,item_key) DO UPDATE SET done=excluded.done;
+END $$;
+REVOKE ALL ON FUNCTION public.mesa_kitchen_check(uuid,text,boolean) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.mesa_kitchen_check(uuid,text,boolean) TO authenticated;

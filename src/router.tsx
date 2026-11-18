@@ -1,6 +1,7 @@
 import Index from "./pages/Index";
 import Context from "./pages/Context";
 import OwnerInbox from "./pages/OwnerInbox";
+import Kitchen from "./pages/Kitchen";
 import NotFound from "./pages/NotFound";
 
 export const routers = [
@@ -12,6 +13,7 @@ export const routers = [
   { path: "/inquire", name: "inquire", element: <Index /> },
   { path: "/context", name: "context", element: <Context /> },
   { path: "/owner", name: "owner", element: <OwnerInbox /> },
+  { path: "/kitchen", name: "kitchen", element: <Kitchen /> },
   /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
   {
     path: "*",

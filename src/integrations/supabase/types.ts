@@ -3526,6 +3526,32 @@ export type Database = {
           },
         ]
       }
+      kitchen_checklist: {
+        Row: {
+          done: boolean
+          inquiry_id: string
+          item_key: string
+        }
+        Insert: {
+          done?: boolean
+          inquiry_id: string
+          item_key: string
+        }
+        Update: {
+          done?: boolean
+          inquiry_id?: string
+          item_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_checklist_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_item: {
         Row: {
           active: boolean
@@ -3871,6 +3897,11 @@ export type Database = {
         Returns: string
       }
       mesa_is_approved_inquiry: { Args: { p_id: string }; Returns: boolean }
+      mesa_kitchen_check: {
+        Args: { p_done: boolean; p_inquiry: string; p_key: string }
+        Returns: undefined
+      }
+      mesa_kitchen_orders: { Args: never; Returns: Json }
       mesa_owner_metrics: { Args: never; Returns: Json }
     }
     Enums: {
