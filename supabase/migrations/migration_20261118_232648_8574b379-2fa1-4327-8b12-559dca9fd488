@@ -1,0 +1,18 @@
+create extension if not exists pg_cron;
+
+create table if not exists public.mesa_kitchen_email_log (
+  inquiry_id uuid not null references public.inquiry(id) on delete cascade,
+  send_date date not null,
+  status text not null default 'sending' check (status in ('sending','accepted','failed','unknown','skipped')),
+  recipients text[] not null default '{}',
+  error text,
+  created_at timestamptz not null default now(),
+  primary key (inquiry_id, send_date)
+);
+alter table public.mesa_kitchen_email_log enable row level security;
+create policy "owners read kitchen email log" on public.mesa_kitchen_email_log for select to authenticated using (exists (select 1 from public.mesa_staff s where s.user_id = auth.uid() and s.role = 'owner'));
+
+-- Private key used only by the scheduled job to call the backend function. No policies: not readable by app users.
+create table if not exists public.mesa_job_secret (name text primary key, secret text not null);
+alter table public.mesa_job_secret enable row level security;
+insert into public.mesa_job_secret (name, secret) values ('kitchen_daily', encode(extensions.gen_random_bytes(32), 'hex')) on conflict (name) do nothing;

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.mesa-decide-inquiry-3759b04e315c]
 verify_jwt = false
+
+[functions.mesa-kitchen-daily-email-3759b04e315c]
+verify_jwt = false

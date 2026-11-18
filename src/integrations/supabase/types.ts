@@ -2499,6 +2499,127 @@ export type Database = {
       [_ in never]: never
     }
   }
+  cron: {
+    Tables: {
+      job: {
+        Row: {
+          active: boolean
+          command: string
+          database: string
+          jobid: number
+          jobname: string | null
+          nodename: string
+          nodeport: number
+          schedule: string
+          username: string
+        }
+        Insert: {
+          active?: boolean
+          command: string
+          database?: string
+          jobid?: number
+          jobname?: string | null
+          nodename?: string
+          nodeport?: number
+          schedule: string
+          username?: string
+        }
+        Update: {
+          active?: boolean
+          command?: string
+          database?: string
+          jobid?: number
+          jobname?: string | null
+          nodename?: string
+          nodeport?: number
+          schedule?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      job_run_details: {
+        Row: {
+          command: string | null
+          database: string | null
+          end_time: string | null
+          job_pid: number | null
+          jobid: number | null
+          return_message: string | null
+          runid: number
+          start_time: string | null
+          status: string | null
+          username: string | null
+        }
+        Insert: {
+          command?: string | null
+          database?: string | null
+          end_time?: string | null
+          job_pid?: number | null
+          jobid?: number | null
+          return_message?: string | null
+          runid?: number
+          start_time?: string | null
+          status?: string | null
+          username?: string | null
+        }
+        Update: {
+          command?: string | null
+          database?: string | null
+          end_time?: string | null
+          job_pid?: number | null
+          jobid?: number | null
+          return_message?: string | null
+          runid?: number
+          start_time?: string | null
+          status?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      alter_job: {
+        Args: {
+          active?: boolean
+          command?: string
+          database?: string
+          job_id: number
+          schedule?: string
+          username?: string
+        }
+        Returns: undefined
+      }
+      schedule:
+        | {
+            Args: { command: string; job_name: string; schedule: string }
+            Returns: number
+          }
+        | { Args: { command: string; schedule: string }; Returns: number }
+      schedule_in_database: {
+        Args: {
+          active?: boolean
+          command: string
+          database: string
+          job_name: string
+          schedule: string
+          username?: string
+        }
+        Returns: number
+      }
+      unschedule:
+        | { Args: { job_name: string }; Returns: boolean }
+        | { Args: { job_id: number }; Returns: boolean }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   extensions: {
     Tables: {
       [_ in never]: never
@@ -3870,6 +3991,56 @@ export type Database = {
           version?: number | null
         }
         Relationships: []
+      }
+      mesa_job_secret: {
+        Row: {
+          name: string
+          secret: string
+        }
+        Insert: {
+          name: string
+          secret: string
+        }
+        Update: {
+          name?: string
+          secret?: string
+        }
+        Relationships: []
+      }
+      mesa_kitchen_email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          inquiry_id: string
+          recipients: string[]
+          send_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          inquiry_id: string
+          recipients?: string[]
+          send_date: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          inquiry_id?: string
+          recipients?: string[]
+          send_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_kitchen_email_log_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mesa_staff: {
         Row: {
@@ -5659,6 +5830,9 @@ export const Constants = {
         "phone_change_token",
       ],
     },
+  },
+  cron: {
+    Enums: {},
   },
   extensions: {
     Enums: {},
