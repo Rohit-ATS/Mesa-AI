@@ -49,6 +49,18 @@ This change focuses on the owner quote detail and its approval prerequisites; it
 - [ ] On approval, preserve the draft and create a new approved quote version, mark the inquiry approved, and generate preparation tasks scheduled backwards from the event time. Treat these changes as one operation: if any part fails, do not report approval or leave a partial result. Require a valid event time and sufficient order and recipe information; show failures clearly and prevent duplicate approvals from repeated clicks.
 - [ ] Keep the demo boundary: **Approve & Send** records approval but does not send a real message or process a payment, and the screen makes that explicit. Maintain owner-only access to financial information and approved-order-only kitchen access; owner provisioning remains dependent on the previously requested verified account.
 
+## Current focus: owner inbox metrics
+
+The owner page currently opens quote detail rather than an inbox, and existing records do not yet capture clarification rounds. The figures will come from stored operational records, not fixed display values. The sample history will be clearly labeled synthetic demo data.
+
+- [ ] Add an owner-only inquiry inbox at `/owner`, retaining access to the existing quote detail, and place a four-metric strip above the inquiry list. Preserve the existing owner-only financial data restrictions.
+- [ ] Show median elapsed time from inquiry receipt to its first approved proposal, using actual recorded timestamps; exclude inquiries without a valid approval and show an unavailable state when there are none.
+- [ ] Show average recorded clarification rounds per inquiry. Record synthetic clarification history for the examples, distinguish a recorded zero from missing history, and do not present unrecorded rounds as zero. The current intake does not yet record clarification rounds, so new inquiries without that information will remain unmeasured until the intake workflow supports it.
+- [ ] Show the percentage of approved orders with a complete kitchen handoff. For this initial definition, require event date and time, delivery location, service style, guest count, explicit dietary information, at least one dish with servings and recipe, and scheduled preparation tasks. Show the definition and an unavailable state when there are no approved orders; an unknown dietary response is not treated as confirmed “none.”
+- [ ] Show upsell value for the current calendar month in Oakland time, using recorded upsell values on inquiries received in that period. Label the period; do not invent values for missing data.
+- [ ] Seed a modest set of varied synthetic historical inquiries, approval times, clarification records, handoff details, and upsell values so the metrics are meaningful. Preserve existing business data, do not overwrite prior records, and make synthetic data identifiable in the inbox and metrics.
+- [ ] Handle loading, missing data, and access errors honestly. No real customer messaging, production access, payments, or AI workflow is introduced.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
