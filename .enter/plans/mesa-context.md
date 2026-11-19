@@ -211,6 +211,36 @@ Everything else keeps working: intake chat, automatic workup and owner email, da
 - The tax rate, SF surcharge amount and per-serving dish prices start empty and show as pending until the owner enters them. No real rates are invented. Records stay synthetic, and there are no payments.
 - Checks: owner and kitchen access rules, kitchen financial isolation, a full run-through using a fictional inquiry (approve → accept → release), and confirming the existing pages still load. Steps that need a signed-in owner or kitchen account are reported as unverified if they can't be run.
 
+## Current focus: dish quantities, in-app messaging, and the business assistant
+
+Two additions. Customers choose **how many portions of each dish** they want. Mesa gets a real-time **Messages** area for the owner and kitchen staff, with an **AI business assistant** for the owner. You chose to drop SMS and WhatsApp. Messages live inside Mesa, and email stays the outside channel through the connected Gmail account. Everything built in earlier steps keeps working as it does today: intake, the three-step release, kitchen board, dashboards, emails and exports.
+
+### 1. Portions per dish
+
+- [ ] Each dish has a **quantity selector** (− / number / +) in the menu, in the request popup, and on the review screen, for example 2 Pollo Guisado and 1 Pernil Asado. Dish quantities are separate from the guest count. A newly added dish starts at the guest count if it's known, otherwise at 10, and the customer can change it to anything from 1 to 10,000. The guest count itself stays separate and keeps the 10-guest minimum.
+- [ ] The review screen and "Your request so far" show each dish with its quantity, for example "Pollo Guisado × 2". The customer can change or remove dishes there before submitting.
+- [ ] The saved order keeps each dish's chosen quantity. The owner's quote dish lines start from those quantities, and the owner can still edit them per quote.
+- [ ] The kitchen ticket, board, plan-ahead totals, AI prep suggestions and day-of email use the confirmed quantities, so recipe amounts scale per dish. Older orders keep their existing quantities.
+
+### 2. Real-time Messages
+
+- [ ] A **Messages** page for signed-in staff, with an unread badge in the owner console and on the kitchen screen. New messages appear instantly on every open device without a refresh. A browser notification also appears when the staff member has allowed notifications. If the live connection drops, the page says so instead of looking current.
+- [ ] **Owner alerts:** after each new inquiry's automatic workup, the owner gets a message with the business proposal summary: customer, date, guests, dishes with quantities, draft quote total (or what's missing), allergies, and flagged issues. It links to the quote page. The existing owner email continues as today.
+- [ ] **Kitchen alerts:** when an order is released to the kitchen, AI suggests the **ideal prep start time** from the dishes, quantities, guests, service style and event time. The suggestion is shown with a short reason on the kitchen ticket and the owner's quote page. On the event day, kitchen staff get a message **one hour before that start time**, along with a matching email reminder. The message includes dishes, quantities, allergies, cross-contact flags and timing, with no prices. If AI is unavailable, Mesa uses the existing standard prep estimate and labels it that way. If a release happens after the reminder time, the message goes out right away. Each order gets one reminder, and declined or unreleased orders get none. The existing 6 AM day-of kitchen email continues.
+- [ ] **Team chat:** the owner and kitchen staff can message each other in real time, for example about running late or a substitution. To keep the rule that the kitchen never sees prices, Mesa blocks team-chat messages containing currency amounts and says why.
+
+### 3. AI business assistant (owner only)
+
+- [ ] A **Business assistant** conversation in the owner's Messages. The owner can ask questions about the business, for example "What's booked next week?", "How many guests did we serve in October?", "Which dishes are ordered most?", "Which quotes are waiting on the customer?" or "What's my average margin?".
+- [ ] It answers only from Mesa's records: past and upcoming orders, quotes and their stages, customers, menu, settings and business context. It says when something isn't recorded instead of guessing. Its answers are advice only. It doesn't change orders, quotes, prices or send anything.
+- [ ] The conversation history is saved and the owner can start a new conversation. Kitchen staff and customers can't access the assistant or its answers. Errors and unavailable AI are shown honestly, and AI use may incur charges.
+
+### Limits
+
+- No SMS or WhatsApp. Staff receive Messages while Mesa is open or when they next open it. Kitchen reminders and owner proposals also go by email through the connected Gmail account, where Gmail accepting a message doesn't prove it was delivered.
+- Reminder timing runs on a schedule that checks every few minutes, so a reminder can arrive a few minutes after the exact time.
+- Checks: dish quantities flow through from intake to quote to kitchen ticket using a fictional inquiry, messages and the assistant are restricted to staff and the owner respectively, and existing pages still load. Steps that need a signed-in owner or kitchen account are reported as unverified if they can't be run.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
