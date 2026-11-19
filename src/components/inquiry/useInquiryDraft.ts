@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sessionKey } from "./useIntakeAgent";
-import { STEPS, dietaryText, emptyDetails, isCaptured, missingLabels, type Details, type StepKey } from "./types";
+import { STEPS, emptyDetails, isCaptured, missingLabels, type Details, type StepKey } from "./types";
 
 export type DraftStatus = "idle" | "saving" | "saved";
 export type DraftView = "chat" | "review";
@@ -62,7 +62,8 @@ export function useInquiryDraft() {
           guests: details.guests,
           service: details.service,
           address: details.address.trim(),
-          dietary: dietaryText(details.dietary),
+          allergies: details.allergies,
+          preferences: details.preferences,
         },
         p_dishes: dishes,
       });

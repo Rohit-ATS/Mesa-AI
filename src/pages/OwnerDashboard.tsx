@@ -6,7 +6,16 @@ import { EventCalendar } from "@/components/EventCalendar";
 import { AvgGuestsChart, BreakdownChart, ChartCard, RequestsChart } from "@/components/dashboard/Charts";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentStaff } from "@/lib/staffAuth";
-import { approvedEvents, customerProfile, summary, trend, type DashInquiry, type Grain } from "@/lib/dashboardStats";
+import { approvedEvents, customerProfile, stageCounts, summary, trend, type DashInquiry, type Grain } from "@/lib/dashboardStats";
+import { stageLabel, type Stage } from "@/lib/workflowStage";
+
+const STAGES: { key: Stage; filter: string; note: string }[] = [
+  { key: "needs_approval", filter: "needs_approval", note: "Owner to approve quote" },
+  { key: "quote_sent", filter: "quote_sent", note: "Waiting for customer" },
+  { key: "ready_to_release", filter: "ready_to_release", note: "Customer accepted" },
+  { key: "released", filter: "in_preparation", note: "On the kitchen board" },
+  { key: "declined", filter: "declined", note: "In CRM declined list" },
+];
 import { useMesaLiveUpdates } from "@/hooks/useMesaLiveUpdates";
 
 const usd = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
@@ -28,7 +37,7 @@ export default function OwnerDashboard() {
       if (!active) return;
       if (role !== "owner") { setMessage(role ? "This account does not have owner access." : "Sign in with an owner account to view the dashboard."); setLoading(false); return; }
       setAuthorized(true);
-      const { data, error } = await supabase.from("inquiry").select("id,created_at,status,guest_count,event_date,event_time,service_style,customer(id,name,org_type),order_line(qty_servings,menu_item(name_es)),kitchen_checklist(item_key,done),quote(recommended_price,version,status)").order("created_at");
+      const { data, error } = await supabase.from("inquiry").select("id,created_at,status,guest_count,event_date,event_time,service_style,customer(id,name,org_type),order_line(qty_servings,menu_item(name_es)),kitchen_checklist(item_key,done),quote(recommended_price,version,status),mesa_quote_version(version,status,accepted_at)").order("created_at");
       if (!active) return;
       if (error) setMessage("The dashboard could not be loaded. Please try again.");
       else { setMessage(""); setRows((data || []) as unknown as DashInquiry[]); }
@@ -38,6 +47,7 @@ export default function OwnerDashboard() {
   }, [revision]);
 
   const stats = useMemo(() => summary(rows), [rows]);
+  const stages = useMemo(() => stageCounts(rows), [rows]);
   const series = useMemo(() => trend(rows, grain), [rows, grain]);
   const profile = useMemo(() => customerProfile(rows), [rows]);
   const events = useMemo(() => approvedEvents(rows), [rows]);
@@ -63,6 +73,13 @@ export default function OwnerDashboard() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{kpis.map(k => (
             <article key={k.label} className="rounded-xl border border-border bg-card p-5"><div className="flex items-center justify-between"><span className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">{k.label}</span><k.icon size={18} className="text-primary" /></div><div className="mt-4 font-display text-3xl text-secondary">{k.value}</div><p className="mt-2 text-xs text-muted-foreground">{k.note}</p></article>
           ))}</div>
+
+          <section className="mt-8 rounded-xl border border-border bg-card p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">Pipeline by stage</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-5">{STAGES.map(s => (
+              <Link key={s.key} to={`/owner?filter=${s.filter}`} className="rounded-lg bg-accent/50 p-4 transition hover:bg-accent"><div className="font-display text-3xl text-secondary">{stages[s.key]}</div><div className="mt-1 text-sm font-semibold text-secondary">{stageLabel[s.key]}</div><div className="text-xs text-muted-foreground">{s.note}</div></Link>
+            ))}</div>
+          </section>
 
           <div className="mt-10 flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-2xl text-secondary">Trends</h2>
             <div role="tablist" aria-label="Time grouping" className="flex rounded-full border border-border bg-card p-1">{(["week", "month"] as Grain[]).map(g => <button key={g} role="tab" aria-selected={grain === g} onClick={() => setGrain(g)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${grain === g ? "bg-secondary text-secondary-foreground" : "text-secondary"}`}>{g === "week" ? "Weekly" : "Monthly"}</button>)}</div>

@@ -4,8 +4,20 @@ import { Layers, Sparkles, UsersRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { prepClass, prepLabel, prepState, todayLA } from "@/lib/prepStatus";
 
-export type KitchenDish = { name_es: string; name_en: string; servings: number; batch_yield: number | null; recipe: { name: string; qty: number; unit: string }[] };
-export type KitchenEvent = { id: string; event_date: string | null; event_time: string | null; venue_area: string | null; guest_count: number | null; dietary_flags: string[]; dietary_confirmed: boolean; dishes: KitchenDish[]; timeline: { dish: string; due_at: string }[]; checklist: Record<string, boolean> };
+export type KitchenDish = { name_es: string; name_en: string; servings: number; batch_yield: number | null; alternative_for?: string | null; recipe: { name: string; qty: number; unit: string }[] };
+export type KitchenAccommodation = { id: string; label: string; guests: number; alternative: string | null; alternative_en: string | null; alternative_servings: number | null; covered_by_menu: boolean; reviewed: boolean };
+export type KitchenEvent = {
+  id: string; event_date: string | null; event_time: string | null; venue_area: string | null; guest_count: number | null; dietary_flags: string[]; dietary_confirmed: boolean;
+  dishes: KitchenDish[]; timeline: { dish: string; due_at: string }[]; checklist: Record<string, boolean>;
+  allergies?: KitchenAccommodation[]; preferences?: KitchenAccommodation[]; breakdown_recorded?: boolean; pre_three_step?: boolean;
+};
+
+/** Short operational dietary summary: structured allergies/preferences, or the legacy note. */
+export function dietarySummary(e: KitchenEvent) {
+  const parts = [...(e.allergies ?? []).map(a => `Allergy: ${a.label} (${a.guests})`), ...(e.preferences ?? []).map(p => `${p.label} (${p.guests})`)];
+  if (parts.length) return parts;
+  return e.breakdown_recorded ? [] : e.dietary_flags.filter(f => f && f.toLowerCase() !== "none");
+}
 
 const safeText = (text: string) => text.replace(/\p{Sc}\s*[\d,.]*/gu, "");
 const shortDate = (d: string) => format(new Date(`${d}T12:00:00`), "EEE MMM d");
@@ -62,7 +74,7 @@ export function KitchenPlanAhead({ events, onOpen }: { events: KitchenEvent[]; o
             <div className="flex items-center justify-between gap-2"><strong className="font-display text-xl text-secondary">{shortDate(e.event_date!)}</strong><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${prepClass[p]}`}>{prepLabel[p]}</span></div>
             <p className="mt-2 flex items-center gap-2 text-muted-foreground"><UsersRound size={16} /> {e.event_time?.slice(0, 5) || "Time TBC"} · {e.guest_count ?? "?"} guests</p>
             <p className="mt-2 text-sm">{e.dishes.map(d => safeText(d.name_es)).join(" · ")}</p>
-            {e.dietary_flags.length > 0 && <p className="mt-2 text-sm font-semibold text-destructive">Dietary: {e.dietary_flags.map(safeText).join(", ")}</p>}
+            {dietarySummary(e).length > 0 && <p className="mt-2 text-sm font-semibold text-destructive">Dietary: {dietarySummary(e).map(safeText).join(", ")}</p>}
           </button>
         ); })}</div>
 

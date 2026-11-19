@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent, type ReactNode } from "react";
-import { AlertCircle, Check, Minus, Plus } from "lucide-react";
+import { AlertCircle, Check, Minus, Plus, X } from "lucide-react";
 import {
-  DIETARY_CHIPS, EMAIL_PATTERN, MAX_DIETARY_LENGTH, MAX_GUESTS, NONE_CHIP, SERVICES, dietaryText, todayString,
+  ALLERGY_OPTIONS, EMAIL_PATTERN, MAX_ACCOMMODATIONS, MAX_ACCOMMODATION_LABEL, MAX_GUESTS, MIN_GUESTS, NONE_CHIP, PREFERENCE_OPTIONS, SERVICES, todayString,
   type Details, type StepKey,
 } from "./types";
 
@@ -120,13 +120,14 @@ function GuestsControl({ details, onSave, onCancel, autoFocus }: ControlProps) {
   const [error, setError] = useState("");
   function nudge(delta: number) {
     const current = /^\d+$/.test(raw) ? Number(raw) : 0;
-    setRaw(String(Math.min(MAX_GUESTS, Math.max(1, current + delta))));
+    setRaw(String(Math.min(MAX_GUESTS, Math.max(MIN_GUESTS, current + delta))));
     setError("");
   }
   function submit(event: FormEvent) {
     event.preventDefault();
     const value = Number(raw);
-    if (!/^\d+$/.test(raw) || value < 1 || value > MAX_GUESTS) { setError("Enter a whole number from 1 to 10,000."); return; }
+    if (!/^\d+$/.test(raw) || value < 1 || value > MAX_GUESTS) { setError("Enter a whole number up to 10,000."); return; }
+    if (value < MIN_GUESTS) { setError(`La Bandera Kitchen caters a minimum of ${MIN_GUESTS} guests.`); return; }
     onSave("guests", value);
   }
   return (
@@ -159,55 +160,70 @@ function ServiceControl({ details, onSave, onCancel }: ControlProps) {
   );
 }
 
-function DietaryControl({ details, onSave, onCancel, autoFocus }: ControlProps) {
-  const id = useId();
-  const [chips, setChips] = useState<string[]>(details.dietary?.chips ?? []);
-  const [otherOn, setOtherOn] = useState(!!details.dietary?.other);
-  const [otherText, setOtherText] = useState(details.dietary?.other ?? "");
-  const [error, setError] = useState("");
+type Picked = { label: string; raw: string; custom: boolean };
 
-  function toggleChip(chip: string) {
-    setError("");
-    if (chip === NONE_CHIP) {
-      const turningOn = !chips.includes(NONE_CHIP);
-      setChips(turningOn ? [NONE_CHIP] : []);
-      if (turningOn) { setOtherOn(false); setOtherText(""); }
-      return;
-    }
-    const rest = chips.filter(item => item !== NONE_CHIP);
-    setChips(rest.includes(chip) ? rest.filter(item => item !== chip) : [...rest, chip]);
+function AccommodationControl({ field, details, onSave, onCancel, autoFocus }: ControlProps & { field: "allergies" | "preferences" }) {
+  const id = useId();
+  const isAllergy = field === "allergies";
+  const options: readonly string[] = isAllergy ? ALLERGY_OPTIONS : PREFERENCE_OPTIONS;
+  const current = details[field];
+  const [none, setNone] = useState(!!current?.none);
+  const [picked, setPicked] = useState<Picked[]>(() => (current?.items ?? []).map(item => ({ label: item.label, raw: String(item.guests), custom: !options.includes(item.label) })));
+  const [error, setError] = useState("");
+  const noun = isAllergy ? "allergy" : "preference";
+
+  function toggleOption(label: string) {
+    setError(""); setNone(false);
+    setPicked(previous => previous.some(item => item.label === label && !item.custom) ? previous.filter(item => item.label !== label || item.custom) : [...previous, { label, raw: "", custom: false }]);
   }
-  function toggleOther() {
+  function update(index: number, patch: Partial<Picked>) {
     setError("");
-    if (!otherOn) setChips(chips.filter(item => item !== NONE_CHIP));
-    setOtherOn(!otherOn);
+    setPicked(previous => previous.map((item, i) => (i === index ? { ...item, ...patch } : item)));
   }
   function submit(event: FormEvent) {
     event.preventDefault();
-    const other = otherOn ? otherText.trim() : "";
-    if (otherOn && !other) { setError("Describe the other dietary need, or turn off Other."); return; }
-    if (chips.length === 0 && !other) { setError("Choose at least one option, or None."); return; }
-    const dietary = { chips, other };
-    if (dietaryText(dietary).length > MAX_DIETARY_LENGTH) { setError("Please keep dietary needs under 250 characters."); return; }
-    onSave("dietary", dietary);
+    if (none) { onSave(field, { none: true, items: [] }); return; }
+    if (!picked.length) { setError(`Choose each ${noun} with its guest count, or None.`); return; }
+    if (picked.length > MAX_ACCOMMODATIONS) { setError(`Please list at most ${MAX_ACCOMMODATIONS}.`); return; }
+    const items = [];
+    for (const item of picked) {
+      const label = item.label.trim();
+      if (!label) { setError(`Name the other ${noun}, or remove it.`); return; }
+      const guests = Number(item.raw);
+      if (!/^\d+$/.test(item.raw) || guests < 1) { setError(`Enter how many guests need ${label}.`); return; }
+      if (details.guests !== null && guests > details.guests) { setError(`${label}: ${guests} guests is more than the ${details.guests} guests attending.`); return; }
+      if (items.some(existing => existing.label.toLowerCase() === label.toLowerCase())) { setError(`${label} is listed twice.`); return; }
+      items.push({ label, guests });
+    }
+    onSave(field, { none: false, items });
   }
   return (
     <ControlForm onSubmit={submit}>
-      <span className="iq-label" id={`${id}-label`}>Dietary needs</span>
+      <span className="iq-label" id={`${id}-label`}>{isAllergy ? "Food allergies" : "Dietary preferences"}</span>
       <div className="iq-chips" role="group" aria-labelledby={`${id}-label`}>
-        {DIETARY_CHIPS.map((chip, index) => (
-          <button key={chip} type="button" className="iq-chip" aria-pressed={chips.includes(chip)} autoFocus={autoFocus && index === 0}
-            onClick={() => toggleChip(chip)}>{chips.includes(chip) && <Check size={16} aria-hidden="true" />}{chip}</button>
-        ))}
-        <button type="button" className="iq-chip" aria-pressed={otherOn} onClick={toggleOther}>{otherOn && <Check size={16} aria-hidden="true" />}Other</button>
+        <button type="button" className="iq-chip" aria-pressed={none} autoFocus={autoFocus}
+          onClick={() => { setError(""); setNone(!none); if (!none) setPicked([]); }}>{none && <Check size={16} aria-hidden="true" />}{NONE_CHIP}</button>
+        {options.map(option => {
+          const on = picked.some(item => item.label === option && !item.custom);
+          return <button key={option} type="button" className="iq-chip" aria-pressed={on} onClick={() => toggleOption(option)}>{on && <Check size={16} aria-hidden="true" />}{option}</button>;
+        })}
+        <button type="button" className="iq-chip" onClick={() => { setError(""); setNone(false); setPicked(previous => [...previous, { label: "", raw: "", custom: true }]); }}><Plus size={16} aria-hidden="true" />Other</button>
       </div>
-      {otherOn && (
-        <>
-          <label htmlFor={`${id}-other`} className="iq-label">Other dietary need</label>
-          <input id={`${id}-other`} className="iq-input" value={otherText} maxLength={MAX_DIETARY_LENGTH} placeholder="For example: shellfish allergy" autoFocus
-            onChange={event => { setOtherText(event.target.value); setError(""); }} />
-        </>
+      {picked.length > 0 && (
+        <div className="iq-accoms">
+          <p className="iq-muted">How many guests need each one?{details.guests !== null && ` (${details.guests} guests total)`}</p>
+          {picked.map((item, index) => (
+            <div key={index} className="iq-accom-row">
+              {item.custom
+                ? <input className="iq-input" aria-label={`Other ${noun}`} placeholder={isAllergy ? "e.g. Mustard" : "e.g. Kosher"} maxLength={MAX_ACCOMMODATION_LABEL} value={item.label} onChange={event => update(index, { label: event.target.value })} />
+                : <span className="iq-accom-name">{item.label}</span>}
+              <input className="iq-input iq-accom-count" inputMode="numeric" aria-label={`Guests needing ${item.label || `this ${noun}`}`} placeholder="Guests" value={item.raw} onChange={event => update(index, { raw: event.target.value.trim() })} />
+              <button type="button" className="iq-step-btn" aria-label={`Remove ${item.label || noun}`} onClick={() => setPicked(previous => previous.filter((_, i) => i !== index))}><X size={16} aria-hidden="true" /></button>
+            </div>
+          ))}
+        </div>
       )}
+      {isAllergy && <p className="iq-muted">Allergies are treated as safety requirements: the kitchen reviews cross-contact for each one.</p>}
       <FieldError id={`${id}-error`} message={error} />
       <Actions onCancel={onCancel} saveLabel="Confirm" />
     </ControlForm>
@@ -223,6 +239,7 @@ export function StepControl({ step, ...props }: ControlProps & { step: StepKey }
     case "guests": return <GuestsControl {...props} />;
     case "service": return <ServiceControl {...props} />;
     case "address": return <TextControl {...props} field="address" label="Demo venue address" placeholder="Street, city" maxLength={250} />;
-    case "dietary": return <DietaryControl {...props} />;
+    case "allergies": return <AccommodationControl {...props} field="allergies" />;
+    case "preferences": return <AccommodationControl {...props} field="preferences" />;
   }
 }

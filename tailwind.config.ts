@@ -56,9 +56,9 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				status: {
-					green: 'hsl(var(--status-green))',
-					yellow: 'hsl(var(--status-yellow))',
-					red: 'hsl(var(--status-red))'
+					green: 'hsl(var(--status-green) / <alpha-value>)',
+					yellow: 'hsl(var(--status-yellow) / <alpha-value>)',
+					red: 'hsl(var(--status-red) / <alpha-value>)'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

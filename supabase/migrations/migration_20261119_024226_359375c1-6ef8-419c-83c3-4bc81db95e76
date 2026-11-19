@@ -1,0 +1,7 @@
+create or replace function public.mesa_accommodation_covered(p_inquiry uuid, p_label text)
+returns boolean language sql stable set search_path = public as $$
+  with t as (select case lower(btrim(p_label)) when 'vegetarian' then array['vegetarian','vegan'] when 'vegan' then array['vegan'] when 'pescatarian' then array['pescatarian','vegetarian','vegan'] when 'gluten/wheat' then array['gluten_free'] when 'gluten-free' then array['gluten_free'] else null end as tags),
+  d as (select m.category, m.dietary_tags from public.order_line o join public.menu_item m on m.id = o.menu_item_id where o.inquiry_id = p_inquiry),
+  pool as (select * from d where category = 'entree' or not exists (select 1 from d where category = 'entree'))
+  select coalesce((select t.tags is not null and exists (select 1 from pool where pool.dietary_tags && t.tags) from t), false)
+$$;

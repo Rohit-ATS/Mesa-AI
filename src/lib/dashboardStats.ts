@@ -1,5 +1,6 @@
 import { addMonths, addWeeks, format, startOfMonth, startOfWeek } from "date-fns";
 import { checklistFromRows, prepState, type PrepState } from "@/lib/prepStatus";
+import { workflowStage, type Stage, type VersionRow } from "@/lib/workflowStage";
 
 export type DashInquiry = {
   id: string; created_at: string; status: string; guest_count: number | null; event_date: string | null; event_time: string | null; service_style: string | null;
@@ -7,7 +8,14 @@ export type DashInquiry = {
   order_line: { qty_servings: number; menu_item: { name_es: string } | null }[];
   kitchen_checklist: { item_key: string; done: boolean }[];
   quote: { recommended_price: number | null; version: number; status: string | null }[];
+  mesa_quote_version: VersionRow[];
 };
+
+export function stageCounts(rows: DashInquiry[]) {
+  const counts: Record<Stage, number> = { needs_approval: 0, quote_sent: 0, ready_to_release: 0, released: 0, declined: 0 };
+  for (const r of rows) counts[workflowStage(r.status, r.mesa_quote_version)] += 1;
+  return counts;
+}
 
 export type Grain = "week" | "month";
 const titleCase = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
