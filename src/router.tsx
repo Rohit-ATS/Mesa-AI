@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Context from "./pages/Context";
 import OwnerInbox from "./pages/OwnerInbox";
+import OwnerDashboard from "./pages/OwnerDashboard";
 import Kitchen from "./pages/Kitchen";
 import Emails from "./pages/Emails";
 import Crm from "./pages/Crm";
@@ -20,6 +21,7 @@ export const routers = [
   { path: "/inquire", name: "inquire", element: <Navigate to="/" replace /> },
   { path: "/context", name: "context", element: <Context /> },
   { path: "/owner", name: "owner", element: <OwnerInbox /> },
+  { path: "/dashboard", name: "dashboard", element: <OwnerDashboard /> },
   { path: "/kitchen", name: "kitchen", element: <Kitchen /> },
   { path: "/staff-login", name: "staff-login", element: <StaffLogin /> },
   { path: "/emails", name: "emails", element: <Emails /> },
