@@ -168,6 +168,49 @@ The app already uses Enter Cloud email-and-password authentication and the two r
 - [ ] Preserve the two existing accounts and role assignments. Enforce owner-only financial access and kitchen-only approved operational access at the data layer, not by navigation alone; do not reset passwords, delete accounts, expose credentials, or weaken existing protections.
 - [ ] Investigate the observed login failures and verify both roles and wrong-role access where safely possible. If verification requires a user-controlled password or email confirmation, explain the remaining step without asking for passwords in chat or claiming an untested login works.
 
+## Current focus: catering-rule quotes, allergies, and a three-step release
+
+Make quotes follow La Bandera's catering rules, treat allergies as safety requirements rather than preferences, and split the current single "Approve" step into three separate steps: **owner approves the quote → customer accepts the latest quote → owner releases to the kitchen**. Decisions taken with the owner: each dish has a **price per serving** set on the Menu page; the **San Francisco delivery surcharge is a flat fee** set in Settings; customers accept through an **Accept button** in the quote email.
+
+Everything else keeps working: intake chat, automatic workup and owner email, dashboard, calendar, inbox filters, CRM and declined list, kitchen board, plan-ahead and AI suggestions, the day-of kitchen email, staff sign-in, and exports. Existing inquiries, quotes and approved kitchen orders are preserved; nothing is deleted.
+
+### 1. Quotes that follow the catering rules
+
+- [ ] **10-guest minimum:** intake will not accept fewer than 10 guests and says why. The owner quote blocks sending a quote under 10 guests and shows the rule.
+- [ ] **Portions by dish:** each dish has a default portion size and a **price per serving**, editable on the Menu page. Dish lines are servings × price per serving. Defaults by type: an entrée is one portion per guest, and other dish types use the dish's portion setting. Any dish without a price shows "Price needed" and blocks sending.
+- [ ] **Optional drinks and dessert:** drinks and desserts appear as their own optional section on the quote. The owner can include or remove each one, and the customer quote lists them separately.
+- [ ] **Separate lines for delivery, staffing and tax:**
+  - **Delivery:** the existing base fee plus mileage. When the venue is in San Francisco, a separate "San Francisco delivery surcharge" line is added using the flat fee in Settings. San Francisco is detected from the venue address, and the owner can switch the surcharge on or off.
+  - **Staffing:** service staff and hours, based on service style and the existing staffing settings.
+  - **Tax:** uses a tax rate set in Settings. While no rate is set, the line reads **"Tax: pending — will be confirmed before your event"** on both the owner and customer quote, and the total is labelled "before tax."
+- [ ] **Review and edit every line:** the owner sees every line (dishes, drinks and dessert, delivery, SF surcharge, staffing, tax) with editable quantity and price, a remove option and a note. Totals update immediately. Edits apply only to that quote, not to global settings or menu prices.
+- [ ] The existing internal cost build-up, margin indicator, competitor band and minimum-wage check stay visible to the owner as a check against the customer price. The customer never sees costs or margins.
+- [ ] The automatic workup that runs after each inquiry builds the first draft from these rules. The owner email shows the new lines, and any line needing attention is flagged (missing price, tax pending, SF detected, unconfirmed alternative).
+
+### 2. Allergies separate from preferences
+
+- [ ] Intake asks separately about **allergies** (e.g. peanuts, tree nuts, shellfish, fish, gluten/wheat, dairy, eggs, soy, sesame, or other) and **preferences** (e.g. vegetarian, vegan, halal, no pork). For each one the customer gives **how many guests** need it. "None" stays available for each question.
+- [ ] Intake rejects a guest count for an accommodation that is above the total guests. It keeps allergies and preferences clearly labelled in the request summary.
+- [ ] On the owner quote, each accommodation is checked against the chosen dishes' dietary tags. If the menu doesn't cover it, the owner must enter a **confirmed alternative** (dish and number of servings) before the quote can be sent. The alternative appears as its own line on the quote.
+- [ ] Every allergy is flagged **"Cross-contact review"** for the kitchen. The kitchen ticket and kitchen board show each allergy, the guest count and the alternative meal, with a checkbox to confirm cross-contact review before the order can be marked prepared.
+- [ ] Older inquiries that only have the previous single dietary note keep showing it, marked "Needs allergy/preference breakdown," rather than being guessed.
+
+### 3. Quote approval → customer acceptance → kitchen release
+
+- [ ] **Approve quote (owner):** freezes the current lines as a numbered quote version and emails the customer the quote: itemised lines, tax pending if applicable, and an **Accept this quote** button. **Nothing appears in the kitchen queue at this step.**
+- [ ] **Customer acceptance:** the button opens a secure page showing the quote and an Accept button. Only the **latest** version can be accepted; an older link says a newer quote replaced it. If the owner edits and re-approves, the new version replaces the old one and the customer must accept again. Acceptance is recorded with its time, and the owner sees "Customer accepted v3" in the inbox and quote page.
+- [ ] **Release to kitchen (owner):** available only after the customer has accepted the latest version. It creates **exactly one kitchen ticket**, with confirmed dish quantities including alternatives, the venue, timing, prep timeline, allergies with cross-contact flags, and preferences. It sends the customer confirmation email (the current approval email moves to this step). Releasing twice cannot create a second ticket.
+- [ ] Kitchen board, calendar, plan-ahead, AI suggestions and the day-of kitchen email show **released** orders only. Kitchen staff still see no prices, costs or margins.
+- [ ] Inbox filters gain **Quote sent**, **Customer accepted** and **Ready to release**, alongside the existing filters. The dashboard counts each stage.
+- [ ] **Decline** works as today and moves the inquiry to the CRM declined list. The owner can also cancel a sent quote before it is accepted.
+- [ ] **Existing data:** inquiries already approved under the old single step stay on the kitchen board as released, and are marked "approved before the three-step process." Other existing inquiries continue at the quote-approval step.
+
+### Limits
+
+- Quote and confirmation emails come from the connected Gmail account and go to the customer email from intake. Gmail accepting a message doesn't prove delivery, and an uncertain send isn't retried automatically.
+- The tax rate, SF surcharge amount and per-serving dish prices start empty and show as pending until the owner enters them. No real rates are invented. Records stay synthetic, and there are no payments.
+- Checks: owner and kitchen access rules, kitchen financial isolation, a full run-through using a fictional inquiry (approve → accept → release), and confirming the existing pages still load. Steps that need a signed-in owner or kitchen account are reported as unverified if they can't be run.
+
 ## Delivery boundaries
 
 The first preview will show the public inquiry experience with clearly labeled example data and disabled real submission; secure persistence, staff access, quote calculation, and remaining screens follow before final delivery. The finished app uses persistent data, not unlabeled mock behavior. Only synthetic or anonymized data is used; there is no access to production systems, real customer messaging, or live payment. This complements rather than replaces the owner's existing work. If conversational interpretation uses AI, it requires enabling the project's AI capability and may incur usage charges; unavailable AI must not produce fabricated extraction or a false success.
