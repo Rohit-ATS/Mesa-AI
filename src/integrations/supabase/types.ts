@@ -3816,6 +3816,63 @@ export type Database = {
           },
         ]
       }
+      mesa_accommodation: {
+        Row: {
+          alt_confirmed_at: string | null
+          alt_menu_item_id: string | null
+          alt_servings: number | null
+          created_at: string
+          cross_contact_reviewed: boolean
+          cross_contact_reviewed_at: string | null
+          guest_count: number
+          id: string
+          inquiry_id: string
+          kind: string
+          label: string
+        }
+        Insert: {
+          alt_confirmed_at?: string | null
+          alt_menu_item_id?: string | null
+          alt_servings?: number | null
+          created_at?: string
+          cross_contact_reviewed?: boolean
+          cross_contact_reviewed_at?: string | null
+          guest_count: number
+          id?: string
+          inquiry_id: string
+          kind: string
+          label: string
+        }
+        Update: {
+          alt_confirmed_at?: string | null
+          alt_menu_item_id?: string | null
+          alt_servings?: number | null
+          created_at?: string
+          cross_contact_reviewed?: boolean
+          cross_contact_reviewed_at?: string | null
+          guest_count?: number
+          id?: string
+          inquiry_id?: string
+          kind?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_accommodation_alt_menu_item_id_fkey"
+            columns: ["alt_menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_accommodation_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mesa_auto_proposal: {
         Row: {
           calculation_error: string | null
@@ -3923,6 +3980,35 @@ export type Database = {
             columns: ["thread_id"]
             isOneToOne: true
             referencedRelation: "mesa_intake_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_dietary_intake: {
+        Row: {
+          allergies_none: boolean
+          created_at: string
+          inquiry_id: string
+          preferences_none: boolean
+        }
+        Insert: {
+          allergies_none?: boolean
+          created_at?: string
+          inquiry_id: string
+          preferences_none?: boolean
+        }
+        Update: {
+          allergies_none?: boolean
+          created_at?: string
+          inquiry_id?: string
+          preferences_none?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_dietary_intake_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
             referencedColumns: ["id"]
           },
         ]
@@ -4038,6 +4124,190 @@ export type Database = {
             columns: ["inquiry_id"]
             isOneToOne: false
             referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_kitchen_release: {
+        Row: {
+          customer_email: string | null
+          dishes: Json
+          email_error: string | null
+          email_status: string | null
+          inquiry_id: string
+          released_at: string
+          released_by: string | null
+          version_id: string
+        }
+        Insert: {
+          customer_email?: string | null
+          dishes?: Json
+          email_error?: string | null
+          email_status?: string | null
+          inquiry_id: string
+          released_at?: string
+          released_by?: string | null
+          version_id: string
+        }
+        Update: {
+          customer_email?: string | null
+          dishes?: Json
+          email_error?: string | null
+          email_status?: string | null
+          inquiry_id?: string
+          released_at?: string
+          released_by?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_kitchen_release_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_kitchen_release_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "mesa_quote_version"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_menu_price: {
+        Row: {
+          menu_item_id: string
+          price_per_serving: number | null
+          servings_per_guest: number
+          updated_at: string
+        }
+        Insert: {
+          menu_item_id: string
+          price_per_serving?: number | null
+          servings_per_guest?: number
+          updated_at?: string
+        }
+        Update: {
+          menu_item_id?: string
+          price_per_serving?: number | null
+          servings_per_guest?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_menu_price_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: true
+            referencedRelation: "menu_item"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_quote_draft: {
+        Row: {
+          inquiry_id: string
+          overrides: Json
+          sf_surcharge: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          inquiry_id: string
+          overrides?: Json
+          sf_surcharge?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          inquiry_id?: string
+          overrides?: Json
+          sf_surcharge?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_quote_draft_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: true
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_quote_version: {
+        Row: {
+          accepted_at: string | null
+          approved_by: string | null
+          closed_at: string | null
+          created_at: string
+          customer_email: string
+          email_error: string | null
+          email_status: string | null
+          id: string
+          inquiry_id: string
+          lines: Json
+          quote_id: string | null
+          status: string
+          subtotal: number
+          tax_amount: number | null
+          tax_rate_pct: number | null
+          token_hash: string
+          total: number
+          version: number
+        }
+        Insert: {
+          accepted_at?: string | null
+          approved_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_email: string
+          email_error?: string | null
+          email_status?: string | null
+          id?: string
+          inquiry_id: string
+          lines: Json
+          quote_id?: string | null
+          status?: string
+          subtotal: number
+          tax_amount?: number | null
+          tax_rate_pct?: number | null
+          token_hash: string
+          total: number
+          version: number
+        }
+        Update: {
+          accepted_at?: string | null
+          approved_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_email?: string
+          email_error?: string | null
+          email_status?: string | null
+          id?: string
+          inquiry_id?: string
+          lines?: Json
+          quote_id?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate_pct?: number | null
+          token_hash?: string
+          total?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_quote_version_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_quote_version_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quote"
             referencedColumns: ["id"]
           },
         ]
@@ -4283,10 +4553,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      mesa_accept_quote: { Args: { p_token: string }; Returns: Json }
+      mesa_accommodation_covered: {
+        Args: { p_inquiry: string; p_label: string }
+        Returns: boolean
+      }
       mesa_approve_quote: {
         Args: { p_inquiry_id: string; p_prep_hours: number; p_quote: Json }
         Returns: string
       }
+      mesa_approve_quote_version: {
+        Args: {
+          p_customer_email: string
+          p_inquiry_id: string
+          p_lines: Json
+          p_quote?: Json
+        }
+        Returns: Json
+      }
+      mesa_cancel_quote_version: {
+        Args: { p_inquiry_id: string }
+        Returns: number
+      }
+      mesa_customer_quote: { Args: { p_token: string }; Returns: Json }
       mesa_decide_inquiry: {
         Args: {
           p_customer_email?: string
@@ -4301,12 +4590,25 @@ export type Database = {
         Args: { p_done: boolean; p_inquiry: string; p_key: string }
         Returns: undefined
       }
+      mesa_kitchen_cross_contact: {
+        Args: { p_accommodation: string; p_done: boolean }
+        Returns: undefined
+      }
       mesa_kitchen_orders: { Args: never; Returns: Json }
       mesa_owner_metrics: { Args: never; Returns: Json }
       mesa_owner_session_metrics: { Args: { p_since: string }; Returns: Json }
+      mesa_release_to_kitchen: { Args: { p_inquiry_id: string }; Returns: Json }
       mesa_submit_demo_inquiry: {
         Args: { p_details: Json; p_dishes: string[]; p_session: string }
         Returns: string
+      }
+      mesa_ticket_dishes: {
+        Args: { p_inquiry: string }
+        Returns: {
+          alternative_for: string
+          menu_item_id: string
+          servings: number
+        }[]
       }
     }
     Enums: {
@@ -4696,6 +4998,39 @@ export type Database = {
         Relationships: []
       }
       messages_2026_11_21: {
+        Row: {
+          event: string | null
+          extension: string
+          id: string
+          inserted_at: string
+          payload: Json | null
+          private: boolean | null
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          event?: string | null
+          extension: string
+          id?: string
+          inserted_at?: string
+          payload?: Json | null
+          private?: boolean | null
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          event?: string | null
+          extension?: string
+          id?: string
+          inserted_at?: string
+          payload?: Json | null
+          private?: boolean | null
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages_2026_11_22: {
         Row: {
           event: string | null
           extension: string
