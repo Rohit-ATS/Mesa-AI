@@ -3873,6 +3873,30 @@ export type Database = {
           },
         ]
       }
+      mesa_assistant_conversation: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mesa_auto_proposal: {
         Row: {
           calculation_error: string | null
@@ -3989,19 +4013,28 @@ export type Database = {
           allergies_none: boolean
           created_at: string
           inquiry_id: string
+          owner_note: string | null
           preferences_none: boolean
+          resolved_at: string | null
+          resolved_by: string | null
         }
         Insert: {
           allergies_none?: boolean
           created_at?: string
           inquiry_id: string
+          owner_note?: string | null
           preferences_none?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
         }
         Update: {
           allergies_none?: boolean
           created_at?: string
           inquiry_id?: string
+          owner_note?: string | null
           preferences_none?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
         }
         Relationships: [
           {
@@ -4135,8 +4168,13 @@ export type Database = {
           email_error: string | null
           email_status: string | null
           inquiry_id: string
+          prep_start_at: string | null
+          prep_start_reason: string | null
+          prep_start_source: string | null
           released_at: string
           released_by: string | null
+          reminder_email_status: string | null
+          reminder_sent_at: string | null
           version_id: string
         }
         Insert: {
@@ -4145,8 +4183,13 @@ export type Database = {
           email_error?: string | null
           email_status?: string | null
           inquiry_id: string
+          prep_start_at?: string | null
+          prep_start_reason?: string | null
+          prep_start_source?: string | null
           released_at?: string
           released_by?: string | null
+          reminder_email_status?: string | null
+          reminder_sent_at?: string | null
           version_id: string
         }
         Update: {
@@ -4155,8 +4198,13 @@ export type Database = {
           email_error?: string | null
           email_status?: string | null
           inquiry_id?: string
+          prep_start_at?: string | null
+          prep_start_reason?: string | null
+          prep_start_source?: string | null
           released_at?: string
           released_by?: string | null
+          reminder_email_status?: string | null
+          reminder_sent_at?: string | null
           version_id?: string
         }
         Relationships: [
@@ -4204,6 +4252,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mesa_message: {
+        Row: {
+          body: string
+          channel: string
+          conversation_id: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          inquiry_id: string | null
+          link: string | null
+          sender_id: string | null
+          sender_kind: string
+          sender_label: string | null
+          title: string | null
+        }
+        Insert: {
+          body: string
+          channel: string
+          conversation_id?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          inquiry_id?: string | null
+          link?: string | null
+          sender_id?: string | null
+          sender_kind: string
+          sender_label?: string | null
+          title?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: string
+          conversation_id?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          inquiry_id?: string | null
+          link?: string | null
+          sender_id?: string | null
+          sender_kind?: string
+          sender_label?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesa_message_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "mesa_assistant_conversation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mesa_message_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesa_message_read: {
+        Row: {
+          channel_key: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_key: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_key?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       mesa_quote_draft: {
         Row: {
@@ -4585,6 +4711,7 @@ export type Database = {
         }
         Returns: string
       }
+      mesa_dietary_unresolved: { Args: { p_inquiry: string }; Returns: boolean }
       mesa_is_approved_inquiry: { Args: { p_id: string }; Returns: boolean }
       mesa_kitchen_check: {
         Args: { p_done: boolean; p_inquiry: string; p_key: string }
@@ -4610,6 +4737,7 @@ export type Database = {
           servings: number
         }[]
       }
+      mesa_unread_counts: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never

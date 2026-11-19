@@ -24,7 +24,7 @@ export function QuoteWorkflow({ inquiryId, data, quote, internalQuote, onChanged
     if (busy) return;
     if (action === "decline" && !window.confirm("Decline this inquiry? It will move to the declined list in CRM.")) return;
     if (action === "cancel" && !window.confirm(`Cancel quote v${latest?.version}? The customer's Accept link will stop working.`)) return;
-    if (action === "release" && !window.confirm("Release this order to the kitchen? This creates the kitchen ticket and emails the customer a confirmation.")) return;
+    if (action === "release" && !window.confirm("Release this order to the kitchen? This creates the kitchen ticket, suggests a prep start time, and emails the customer a confirmation.")) return;
     setBusy(action); setMessage(null);
     if (action === "cancel") {
       const { error } = await supabase.rpc("mesa_cancel_quote_version", { p_inquiry_id: inquiryId });
@@ -51,6 +51,8 @@ export function QuoteWorkflow({ inquiryId, data, quote, internalQuote, onChanged
       <Steps step={4} />
       <p className="mt-5 flex items-center gap-2 font-semibold text-secondary"><ChefHat size={18} className="text-primary" /> Released to the kitchen {when(data.release.released_at)} — v{data.versions.find(v => v.id === data.release!.version_id)?.version ?? "?"} is the kitchen ticket.</p>
       <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><Mail size={15} /> Customer confirmation {emailLabel[data.release.email_status ?? "skipped"]}{data.release.customer_email ? ` · ${data.release.customer_email}` : ""}</p>
+      {data.release.prep_start_at ? <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground"><Clock3 size={15} className="mt-0.5 shrink-0" /><span>Kitchen prep start {when(data.release.prep_start_at)} ({data.release.prep_start_source === "ai" ? "AI-suggested" : "standard estimate"}){data.release.prep_start_reason ? ` — ${data.release.prep_start_reason}` : ""}. {data.release.reminder_sent_at ? `Kitchen reminder sent ${when(data.release.reminder_sent_at)}${data.release.reminder_email_status ? ` · email ${emailLabel[data.release.reminder_email_status] ?? data.release.reminder_email_status}` : ""}.` : "The kitchen gets a reminder one hour before."}</span></p>
+        : <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><Clock3 size={15} /> No suggested prep start recorded for this release.</p>}
       <Note message={message} />
     </Shell>
   );

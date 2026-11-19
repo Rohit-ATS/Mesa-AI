@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.mesa-kitchen-planner-3759b04e315c]
 verify_jwt = false
+
+[functions.mesa-kitchen-reminder-3759b04e315c]
+verify_jwt = false
+
+[functions.mesa-owner-assistant-3759b04e315c]
+verify_jwt = false

@@ -12,6 +12,7 @@ import Export from "./pages/Export";
 import NotFound from "./pages/NotFound";
 import StaffLogin from "./pages/StaffLogin";
 import AcceptQuote from "./pages/AcceptQuote";
+import Messages from "./pages/Messages";
 
 export const routers = [
   {
@@ -31,6 +32,7 @@ export const routers = [
   { path: "/menu", name: "menu", element: <MenuAdmin /> },
   { path: "/export", name: "export", element: <Export /> },
   { path: "/accept/:token", name: "accept-quote", element: <AcceptQuote /> },
+  { path: "/messages", name: "messages", element: <Messages /> },
   /* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
   {
     path: "*",

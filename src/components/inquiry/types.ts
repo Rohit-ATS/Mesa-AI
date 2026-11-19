@@ -115,6 +115,10 @@ export function capturedCount(details: Details) {
   return STEPS.filter(step => isCaptured(details, step.key)).length;
 }
 
+export function dishSummary(chosen: string[], portions: (name: string) => number) {
+  return chosen.map(name => `${name} × ${portions(name)}`).join(", ");
+}
+
 export function dishLabel(count: number) {
   return count === 1 ? "1 dish" : `${count} dishes`;
 }

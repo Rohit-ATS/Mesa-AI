@@ -76,6 +76,16 @@
 .iq-card-title em { font-style:normal; }
 .iq-dishes { display:flex; flex-direction:column; gap:.6rem; }
 .iq-label-row { display:flex; align-items:center; gap:.6rem; }
+.iq-qty-list { display:flex; flex-direction:column; gap:.5rem; margin:0; padding:0; list-style:none; }
+.iq-qty-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; }
+.iq-qty-name { flex:1; min-width:8rem; color:hsl(var(--landing-blue)); font:600 .875rem/1.2 'Oswald',sans-serif; letter-spacing:.05em; text-transform:uppercase; }
+.iq-qty-controls { display:flex; align-items:center; gap:.35rem; }
+.iq-qty-controls .iq-step-btn { width:2.25rem; height:2.25rem; }
+.iq-qty-controls .iq-step-btn:disabled, .iq-qty-remove:disabled { opacity:.4; cursor:default; }
+.iq-qty-input { width:4.25rem; min-height:2.25rem; padding:.25rem; text-align:center; }
+.iq-qty-remove { display:grid; place-items:center; width:2.25rem; height:2.25rem; border:0; background:transparent; color:hsl(var(--landing-ink)/.7); cursor:pointer; }
+.iq-qty-remove:hover:not(:disabled) { color:hsl(var(--landing-red)); }
+.landing-qty { margin-top:1rem; max-width:36rem; }
 .iq-dish-chips { display:flex; flex-wrap:wrap; gap:.5rem; margin:0; padding:0; list-style:none; }
 .iq-dish-chip { display:inline-flex; align-items:center; gap:.5rem; min-height:2.75rem; padding:0 .9rem; border:1.5px solid hsl(var(--landing-blue)); border-radius:999px; background:hsl(var(--landing-blue)); color:hsl(var(--landing-light)); font:600 .875rem/1.1 'Oswald',sans-serif; letter-spacing:.05em; text-transform:uppercase; cursor:pointer; }
 .iq-dish-chip:hover:not(:disabled) { background:hsl(var(--landing-blue)/.85); }

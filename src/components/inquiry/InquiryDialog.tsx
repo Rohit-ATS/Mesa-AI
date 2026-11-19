@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { portionsFor, type DishQuantities } from "./DishQuantities";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { InquiryChat } from "./InquiryChat";
 import { RequestCard } from "./RequestCard";
@@ -7,9 +8,12 @@ import { capturedCount, dishLabel, missingLabels, STEPS } from "./types";
 import { useInquiryDraft } from "./useInquiryDraft";
 import { useIntakeAgent } from "./useIntakeAgent";
 
-type Props = { open: boolean; onOpenChange: (open: boolean) => void; chosen: string[]; onToggleDish: (name: string) => void };
+type Props = {
+  open: boolean; onOpenChange: (open: boolean) => void; chosen: string[]; onToggleDish: (name: string) => void;
+  quantities: DishQuantities; onQuantity: (name: string, portions: number) => void; onGuests: (guests: number | null) => void;
+};
 
-export function InquiryDialog({ open, onOpenChange, chosen, onToggleDish }: Props) {
+export function InquiryDialog({ open, onOpenChange, chosen, onToggleDish, quantities, onQuantity, onGuests }: Props) {
   const agent = useIntakeAgent();
   const draft = useInquiryDraft();
   const { prepare, ensureReady } = agent;
@@ -19,6 +23,7 @@ export function InquiryDialog({ open, onOpenChange, chosen, onToggleDish }: Prop
   const count = capturedCount(draft.details);
 
   useEffect(() => { if (open) prepare(); }, [open, prepare]);
+  useEffect(() => { onGuests(draft.details.guests); }, [draft.details.guests, onGuests]);
 
   function addDishes() {
     onOpenChange(false);
@@ -40,14 +45,14 @@ export function InquiryDialog({ open, onOpenChange, chosen, onToggleDish }: Prop
           </div>
           <div className="iq-grid">
             {reviewing ? (
-              <ReviewPanel details={draft.details} chosen={chosen} missing={missing} status={draft.status} error={draft.submitError}
-                onEdit={draft.edit} onRemoveDish={onToggleDish} onAddDishes={addDishes} onBack={draft.closeReview}
-                onSubmit={() => void draft.submit(chosen, ensureReady)} />
+              <ReviewPanel details={draft.details} chosen={chosen} quantities={quantities} missing={missing} status={draft.status} error={draft.submitError}
+                onEdit={draft.edit} onRemoveDish={onToggleDish} onQuantity={onQuantity} onAddDishes={addDishes} onBack={draft.closeReview}
+                onSubmit={() => void draft.submit(chosen, Object.fromEntries(chosen.map(name => [name, portionsFor(name, quantities, draft.details.guests)])), ensureReady)} />
             ) : (
               <InquiryChat draft={draft} agent={agent} />
             )}
-            <RequestCard details={draft.details} chosen={chosen} locked={draft.locked} saved={saved} reviewing={reviewing}
-              onRemoveDish={onToggleDish} onEdit={draft.edit} onReview={draft.openReview} />
+            <RequestCard details={draft.details} chosen={chosen} quantities={quantities} locked={draft.locked} saved={saved} reviewing={reviewing}
+              onRemoveDish={onToggleDish} onQuantity={onQuantity} onEdit={draft.edit} onReview={draft.openReview} />
           </div>
         </div>
         {!reviewing && (

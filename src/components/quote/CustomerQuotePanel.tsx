@@ -1,28 +1,37 @@
 import { useMemo } from "react";
 import { AlertTriangle, MapPin } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
-import { buildCustomerQuote } from "@/lib/customerQuote";
+import { alternativeSuggestions, buildCustomerQuote } from "@/lib/customerQuote";
 import { useCustomerQuoteData } from "./useCustomerQuoteData";
 import { QuoteLinesTable } from "./QuoteLinesTable";
 import { AccommodationsPanel } from "./AccommodationsPanel";
 import { QuoteWorkflow } from "./QuoteWorkflow";
+import { QuoteSummary } from "./QuoteSummary";
 
 const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
 /** Customer quote lines, allergies/preferences and the three-step approval for one inquiry. */
 export function CustomerQuotePanel({ inquiryId, internalCost, internalQuote, onStatus }: { inquiryId: string; internalCost?: number | null; internalQuote?: Json; onStatus: (status: string) => void }) {
   const { data, error, overrides, sfSurcharge, saveState, updateOverrides, updateSf, reload } = useCustomerQuoteData(inquiryId);
-  const quote = useMemo(() => data && buildCustomerQuote({ event: data.event, dishes: data.dishes, accommodations: data.accommodations, settings: data.settings, sfSurcharge, overrides }), [data, sfSurcharge, overrides]);
+  const quote = useMemo(() => data && buildCustomerQuote({ event: data.event, dishes: data.dishes, accommodations: data.accommodations, settings: data.settings, sfSurcharge, overrides, estimates: data.estimates, dietaryUnresolved: data.unresolvedNotes }), [data, sfSurcharge, overrides]);
   if (error) return <p role="alert" className="mt-8 rounded-lg border border-destructive bg-card p-4 text-sm text-destructive">{error}</p>;
   if (!data || !quote) return <p className="mt-8 text-sm text-muted-foreground">Loading customer quote…</p>;
   const locked = data.status === "approved" || data.status === "declined" || !!data.release;
   const margin = internalCost != null && quote.subtotal > 0 ? (quote.subtotal - internalCost) / quote.subtotal : null;
   const green = data.settings.margin_green_threshold ?? 0.3; const yellow = data.settings.margin_yellow_threshold ?? 0.2;
   const flag = margin == null ? null : margin >= green ? "green" : margin >= yellow ? "yellow" : "red";
+  const suggestions = locked ? [] : alternativeSuggestions(quote, data.event.guests);
 
   return (
     <>
-      <AccommodationsPanel inquiryId={inquiryId} guests={data.event.guests} dishes={data.dishes} menu={data.menu} accommodations={data.accommodations} dietaryFlags={data.dietaryFlags} breakdownRecorded={data.breakdownRecorded} locked={locked} onSaved={reload} />
+      {data.unresolvedNotes.length > 0 && !locked && (
+        <a href="#dietary" className="mt-8 flex items-start gap-3 rounded-xl border-2 border-destructive bg-destructive/10 p-5 text-sm">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-destructive" />
+          <span><span className="block font-bold uppercase tracking-wider text-destructive">Resolve before sending</span>
+            <span className="mt-1 block text-secondary">Dietary note "{data.unresolvedNotes.join(", ")}" has no meal count and no confirmed alternative. Record each allergy or preference with its number of meals below — the quote can't be approved until it's resolved.</span></span>
+        </a>
+      )}
+      <AccommodationsPanel inquiryId={inquiryId} guests={data.event.guests} dishes={data.dishes} menu={data.menu} accommodations={data.accommodations} dietaryFlags={data.dietaryFlags} breakdownRecorded={data.breakdownRecorded} unresolvedNotes={data.unresolvedNotes} ownerNote={data.ownerNote} locked={locked} onSaved={reload} />
       <section className="mt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div><div className="eyebrow">WHAT THE CUSTOMER SEES</div><h2 className="mt-3 font-display text-3xl text-secondary">Customer quote</h2>
@@ -37,12 +46,19 @@ export function CustomerQuotePanel({ inquiryId, internalCost, internalQuote, onS
         {quote.flags.length > 0 && !locked && (
           <ul className="mt-4 space-y-1 rounded-lg bg-accent p-4 text-sm text-accent-foreground">{quote.flags.map(f => <li key={f} className="flex items-start gap-2"><AlertTriangle size={15} className="mt-0.5 shrink-0" />{f}</li>)}</ul>
         )}
+        {suggestions.map(sug => (
+          <div key={sug.key} className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4 text-sm">
+            <p className="text-secondary">Alternatives add {sug.altServings} servings. Reduce <strong>{sug.label}</strong> from {sug.from} to {sug.to} so main servings match {data.event.guests} guests?</p>
+            <button type="button" onClick={() => updateOverrides(previous => ({ ...previous, [sug.key]: { ...previous[sug.key], qty: sug.to } }))} className="rounded-md border border-primary px-4 py-2 font-semibold text-primary">Reduce to {sug.to}</button>
+          </div>
+        ))}
         <QuoteLinesTable quote={quote} locked={locked} onChange={updateOverrides} />
         {margin != null && flag && (
           <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">Check against internal cost ({money(internalCost!)}): <span className={`rounded-full px-3 py-1 text-xs font-semibold margin-${flag}`}>{(margin * 100).toFixed(1)}% margin on the customer subtotal</span> <span className="text-xs">Owner-only — never shown to the customer.</span></p>
         )}
       </section>
       <QuoteWorkflow inquiryId={inquiryId} data={data} quote={quote} internalQuote={internalQuote} onChanged={status => { onStatus(status); reload(); }} />
+      <QuoteSummary inquiryId={inquiryId} data={data} quote={quote} />
     </>
   );
 }

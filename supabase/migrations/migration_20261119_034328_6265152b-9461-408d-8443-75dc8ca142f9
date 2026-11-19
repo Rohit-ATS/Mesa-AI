@@ -1,0 +1,8 @@
+select cron.schedule('mesa-kitchen-prep-reminder', '*/5 * * * *', $cron$
+  select net.http_post(
+    url := 'https://br-ritzy-bril-5616e14b.supabase.aidap-global.ap-southeast-1.bytepluses.com/functions/v1/mesa-kitchen-reminder-3759b04e315c',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-mesa-job-key', (select secret from public.mesa_job_secret where name = 'kitchen_reminder')),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 120000
+  );
+$cron$);

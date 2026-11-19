@@ -127,13 +127,16 @@ async function askAI(token: string, instruction: string, data: unknown) {
 // ---- Customer quote lines (copied from src/lib/customerQuote.ts) ----
 // Customer-facing quote lines built from La Bandera's catering rules.
 // Pure function: the caller supplies records, nothing is read or written here.
-// Copy of src/lib/customerQuote.ts — keep the two in sync.
+// Keep in sync with supabase/functions/mesa-auto-proposal-3759b04e315c/customerQuote.ts.
 
 const MIN_GUESTS = 10;
 export type LineKind = "dish" | "optional" | "alternative" | "delivery" | "sf_surcharge" | "staffing" | "tax";
 export type QuoteDish = { menu_item_id: string; name_es: string; name_en: string | null; category: string; qty_servings: number; price_per_serving: number | null; dietary_tags: string[] };
 export type QuoteAccommodation = { id: string; kind: "allergy" | "preference"; label: string; guest_count: number; alt_menu_item_id: string | null; alt_servings: number | null; alt_name: string | null; alt_price: number | null };
 export type QuoteEvent = { guests: number | null; service_style: string | null; venue_address: string | null; venue_zip: string | null; distance_mi: number | null; event_duration_hours: number | null };
+/** Values the automatic workup estimated because the customer didn't provide them. Always shown as demo estimates. */
+export type QuoteEstimates = { distance_mi?: number | null; event_duration_hours?: number | null };
+export const DEMO_ESTIMATE = "Demo estimate — confirm with customer";
 export type LineOverride = { qty?: number | null; unit_price?: number | null; note?: string; removed?: boolean };
 export type Overrides = Record<string, LineOverride>;
 export type QuoteLine = {
@@ -163,8 +166,12 @@ export function detectSanFrancisco(address: string | null, zip: string | null) {
 
 export function buildCustomerQuote(input: {
   event: QuoteEvent; dishes: QuoteDish[]; accommodations: QuoteAccommodation[]; settings: Record<string, number | null>; sfSurcharge: boolean | null; overrides: Overrides;
+  estimates?: QuoteEstimates; dietaryUnresolved?: string[];
 }) {
-  const { event, dishes, accommodations, settings, overrides } = input;
+  const { dishes, accommodations, settings, overrides } = input;
+  const estDistance = input.event.distance_mi == null && input.estimates?.distance_mi != null;
+  const estDuration = input.event.event_duration_hours == null && input.estimates?.event_duration_hours != null;
+  const event = { ...input.event, distance_mi: estDistance ? input.estimates!.distance_mi! : input.event.distance_mi, event_duration_hours: estDuration ? input.estimates!.event_duration_hours! : input.event.event_duration_hours };
   const s = (key: string) => { const v = settings[key]; return v == null || !Number.isFinite(Number(v)) ? null : Number(v); };
   const guests = event.guests;
   const base: Omit<QuoteLine, "removed" | "edited" | "amount" | "issue" | "note">[] = [];
@@ -189,7 +196,7 @@ export function buildCustomerQuote(input: {
   const trip = fee != null && perMile != null && event.distance_mi != null ? round2(fee + event.distance_mi * 2 * perMile) : null;
   base.push({
     key: "delivery", kind: "delivery", label: `Delivery — base fee + mileage${event.distance_mi != null ? ` (${event.distance_mi} mi each way, round trip)` : ""}`,
-    qty: vehicles, unit: vehicles === 1 ? "vehicle" : "vehicles", unit_price: trip, hint: event.distance_mi == null ? "Distance to venue needed for mileage" : "",
+    qty: vehicles, unit: vehicles === 1 ? "vehicle" : "vehicles", unit_price: trip, hint: event.distance_mi == null ? "Distance to venue needed for mileage" : estDistance ? `${DEMO_ESTIMATE} (distance)` : "",
   });
 
   const sfDetected = detectSanFrancisco(event.venue_address, event.venue_zip);
@@ -203,7 +210,7 @@ export function buildCustomerQuote(input: {
     base.push({
       key: "staffing", kind: "staffing", label: `Service staff${staff != null && hours != null ? ` — ${staff} staff × ${hours} h` : ""}`,
       qty: staff != null && hours != null ? round2(staff * hours) : null, unit: "staff hours", unit_price: s("staff_charge_hourly"),
-      hint: hours == null ? "Event length needed for staffing hours" : "",
+      hint: hours == null ? "Event length needed for staffing hours" : estDuration && event.service_style === "full_service" ? `${DEMO_ESTIMATE} (event length)` : "",
     });
   }
 
@@ -230,6 +237,7 @@ export function buildCustomerQuote(input: {
   };
 
   const blocking: string[] = [];
+  for (const note of input.dietaryUnresolved ?? []) blocking.push(`Resolve before sending: dietary note "${note}" — record each allergy or preference with its number of meals, or confirm there are none.`);
   if (guests == null || guests < MIN_GUESTS) blocking.push(`La Bandera Kitchen caters a minimum of ${MIN_GUESTS} guests${guests != null ? ` — this event has ${guests}` : ""}.`);
   if (!active.some(l => l.kind === "dish")) blocking.push("Add at least one dish line.");
   for (const l of active) if (l.issue) blocking.push(`${l.issue}: ${l.label}`);
@@ -238,6 +246,8 @@ export function buildCustomerQuote(input: {
     if (!accommodationCovered(a.label, dishes) && (!a.alt_menu_item_id || !a.alt_servings)) blocking.push(`Confirm an alternative meal for ${a.kind} "${a.label}" (${a.guest_count} guests).`);
   }
   const flags = [...blocking];
+  if (estDistance) flags.push(`Distance ${event.distance_mi} mi is a ${DEMO_ESTIMATE.toLowerCase()}.`);
+  if (estDuration) flags.push(`Event length ${event.event_duration_hours} h is a ${DEMO_ESTIMATE.toLowerCase()}.`);
   if (!taxRemoved && rate == null) flags.push("Tax pending — totals are before tax.");
   if (sfDetected) flags.push(sfOn ? "San Francisco venue detected — surcharge added." : "San Francisco venue detected — surcharge switched off.");
 
@@ -246,6 +256,20 @@ export function buildCustomerQuote(input: {
 }
 
 export type CustomerQuote = ReturnType<typeof buildCustomerQuote>;
+
+/** When confirmed alternatives push total main-dish servings above the guest count, suggest reducing the main dish. Never applied automatically. */
+export function alternativeSuggestions(quote: CustomerQuote, guests: number | null) {
+  if (guests == null) return [];
+  const active = quote.lines.filter(l => !l.removed);
+  const alternatives = active.filter(l => l.kind === "alternative" && l.qty != null);
+  const altServings = alternatives.reduce((sum, l) => sum + (l.qty ?? 0), 0);
+  const mains = active.filter(l => l.kind === "dish" && l.qty != null);
+  if (!alternatives.length || !mains.length) return [];
+  const main = [...mains].sort((a, b) => (b.qty ?? 0) - (a.qty ?? 0))[0];
+  const target = Math.max(1, Math.round(((main.qty ?? 0) - altServings) * 100) / 100);
+  if ((main.qty ?? 0) + altServings <= guests || target === main.qty) return [];
+  return [{ key: main.key, label: main.label, from: main.qty ?? 0, to: target, altServings }];
+}
 
 /** Lines in the shape the approve-quote action expects. */
 export function linesForApproval(quote: CustomerQuote) {
@@ -293,10 +317,13 @@ async function run(db: SupabaseClient, inquiryId: string, origin: string | null)
     await update({ quote_id: quoteId, calculation_error: calcError, estimated_fields: estimated });
 
     // 1b. Customer quote lines from the catering rules (the owner edits these on the quote page).
-    const [{ data: prices }, { data: accoms }] = await Promise.all([
+    const [{ data: prices }, { data: accoms }, { data: intake }] = await Promise.all([
       db.from("mesa_menu_price").select("menu_item_id,price_per_serving"),
       db.from("mesa_accommodation").select("id,kind,label,guest_count,alt_menu_item_id,alt_servings").eq("inquiry_id", inquiryId),
+      db.from("mesa_dietary_intake").select("inquiry_id").eq("inquiry_id", inquiryId).maybeSingle(),
     ]);
+    const realNotes = ((i.dietary_flags || []) as string[]).filter(f => f.trim() && !["none", "no", "n/a", "na"].includes(f.trim().toLowerCase()));
+    const dietaryUnresolved = !intake && !(accoms || []).length ? realNotes : [];
     const priceMap = new Map((prices || []).map((p: Row) => [p.menu_item_id, p.price_per_serving == null ? null : Number(p.price_per_serving)]));
     const settingMap = Object.fromEntries((settings.data || []).map((s: Row) => [s.key, s.value_numeric == null ? null : Number(s.value_numeric)]));
     const customer = buildCustomerQuote({
@@ -304,6 +331,8 @@ async function run(db: SupabaseClient, inquiryId: string, origin: string | null)
       dishes: (lines.data || []).map((l: Row) => ({ menu_item_id: l.menu_item_id, name_es: l.menu_item?.name_es ?? "Dish", name_en: l.menu_item?.name_en ?? null, category: l.menu_item?.category ?? "entree", dietary_tags: l.menu_item?.dietary_tags ?? [], qty_servings: Number(l.qty_servings), price_per_serving: priceMap.get(l.menu_item_id) ?? null })),
       accommodations: (accoms || []).map((a: Row) => ({ id: a.id, kind: a.kind, label: a.label, guest_count: a.guest_count, alt_menu_item_id: a.alt_menu_item_id, alt_servings: a.alt_servings, alt_name: null, alt_price: a.alt_menu_item_id ? priceMap.get(a.alt_menu_item_id) ?? null : null })),
       settings: settingMap, sfSurcharge: null, overrides: {},
+      estimates: { distance_mi: i.distance_mi == null ? ESTIMATED_DISTANCE_MI : null, event_duration_hours: i.event_duration_hours == null ? ESTIMATED_DURATION_HOURS : null },
+      dietaryUnresolved,
     });
     const accomText = (accoms || []).length ? (accoms || []).map((a: Row) => `${a.kind === "allergy" ? "Allergy" : "Preference"}: ${a.label} (${a.guest_count} guests)`).join("; ") : null;
 
@@ -334,19 +363,19 @@ async function run(db: SupabaseClient, inquiryId: string, origin: string | null)
 <div style="background:#1d2b4f;color:#fdf6e9;padding:22px"><div style="font-size:11px;letter-spacing:2px">LA BANDERA KITCHEN · NEW INQUIRY · DEMO DATA</div><h1 style="margin:8px 0 0;font-size:24px">${esc(i.customer?.name)} — ${esc(i.event_date)} — ${esc(i.guest_count)} guests</h1></div>
 <div style="padding:22px;background:#fdf6e9">
 <h2 style="color:#b3202a;font-size:18px">Event</h2><p style="line-height:1.6">${esc(i.event_date)} at ${esc(String(i.event_time ?? "").slice(0, 5))} · ${esc(i.service_style)} · ${esc(i.venue_address)}<br>${accomText ? `Allergies &amp; preferences: ${esc(accomText)}` : `Dietary: ${esc((i.dietary_flags || []).join(", ") || "None recorded")}`}</p>
-<ul>${dishes.map(d => `<li>${esc(d.name)} · ${esc(d.servings)} servings</li>`).join("")}</ul>
-${estimated.length ? `<p style="background:#fff3cd;padding:10px;font-size:13px">Estimated inputs (not provided by customer): ${esc(estimated.join("; "))}. Confirm before approving.</p>` : ""}
+<ul>${dishes.map(d => `<li>${esc(d.name)} × ${esc(d.servings)} portions</li>`).join("")}</ul>
+${estimated.length ? `<p style="background:#fff3cd;padding:10px;font-size:13px">Demo estimates (not provided by customer): ${esc(estimated.join("; "))}. Demo values — not actual LBK pricing; confirm with the customer before approving the quote.</p>` : ""}
 <h2 style="color:#b3202a;font-size:18px">Customer quote (draft lines)</h2>
 <table style="width:100%;border-collapse:collapse;font-size:14px;background:#fff">${customer.lines.filter(l => !l.removed).map(l => `<tr><td style="padding:7px;border-bottom:1px solid #eee">${esc(l.label)}${l.kind === "optional" ? " <em>(optional)</em>" : ""}${l.issue ? ` <strong style="color:#b3202a">— ${esc(l.issue)}</strong>` : ""}</td><td style="padding:7px;border-bottom:1px solid #eee;white-space:nowrap">${l.kind === "tax" ? (l.unit_price == null ? "" : `${esc(l.unit_price)}%`) : `${esc(l.qty ?? "?")} ${esc(l.unit)} × ${l.unit_price == null ? "?" : usd(l.unit_price)}`}</td><td style="padding:7px;border-bottom:1px solid #eee;text-align:right">${l.amount == null ? (l.kind === "tax" ? "Pending" : "—") : usd(l.amount)}</td></tr>`).join("")}<tr><td colspan="2" style="padding:7px"><strong>${customer.taxPending ? "Total before tax" : "Total"}</strong></td><td style="padding:7px;text-align:right"><strong>${usd(customer.total)}</strong></td></tr></table>
 ${customer.flags.length ? `<div style="background:#fff3cd;padding:10px;font-size:13px;margin-top:8px"><strong>Needs attention:</strong><ul style="margin:4px 0 0;padding-left:18px">${customer.flags.map(f => `<li>${esc(f)}</li>`).join("")}</ul></div>` : ""}
-<h2 style="color:#b3202a;font-size:18px">Internal cost check (owner only)</h2>
+<h2 style="color:#b3202a;font-size:18px">Internal cost check (owner only)</h2><p style="font-size:12px;color:#6b7280;margin-top:-8px">Every cost, rate and benchmark below is a demo value — not actual LBK pricing.</p>
 ${quote ? `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(([l, v, n]) => `<tr><td style="padding:8px 0;border-bottom:1px solid #e5dccb"><strong>${l}</strong><br><span style="font-size:12px;color:#6b7280">${esc(n)}</span></td><td style="text-align:right;vertical-align:top;padding:8px 0;border-bottom:1px solid #e5dccb">${usd(v)}</td></tr>`).join("")}</table>
 <p style="background:#fff;padding:12px;line-height:1.7">Suggested price: <strong>${usd(quote.recommended_price)}</strong> (${usd(quote.price_per_guest)}/guest)<br>Margin: <strong>${(quote.margin_pct * 100).toFixed(1)}%</strong> · Deposit: ${usd(quote.deposit)}<br>Staffing: ${quote.prep_staff} prep · ${quote.service_staff} service · ${quote.vehicles} vehicle(s)<br>Competitor band: ${quote.competitor_low == null ? "Unavailable" : `${usd(quote.competitor_low)} – ${usd(quote.competitor_high)} per guest`}<br>Tax: ${esc(quote.assumptions.tax)}</p>` : `<p style="color:#b3202a">Quote could not be calculated: ${esc(calcError)}</p>`}
 <h2 style="color:#b3202a;font-size:18px">Research brief</h2>${research ? para(research) : "<p>Not available.</p>"}
 <h2 style="color:#b3202a;font-size:18px">Customer proposal draft</h2><div style="background:#fff;padding:14px;border-left:4px solid #b3202a">${proposal ? para(proposal) : "<p>Not available.</p>"}</div>
 ${aiErrors.length ? `<p style="font-size:12px;color:#b3202a">Issues: ${esc(aiErrors.join(" "))}</p>` : ""}
-${link ? `<p><a href="${esc(link)}" style="background:#b3202a;color:#fff;padding:12px 18px;text-decoration:none;display:inline-block">Review &amp; approve in Mesa</a></p>` : ""}
-<p style="font-size:11px;color:#6b7280">Automatic draft for owner review. Nothing has been sent to the customer — approving the quote in Mesa emails it with an Accept button. Demo data only.</p></div></div>`;
+${link ? `<p><a href="${esc(link)}" style="background:#b3202a;color:#fff;padding:12px 18px;text-decoration:none;display:inline-block">Review the quote in Mesa</a></p>` : ""}
+<p style="font-size:11px;color:#6b7280">Automatic draft for owner review. Nothing has been sent to the customer. Three separate steps follow: you approve and email the quote, the customer accepts the current version, then you release it to the kitchen. Demo data only.</p></div></div>`;
       try {
         const res = await fetch(GMAIL_SEND, { method: "POST", headers: { Authorization: `Bearer ${gmail}`, "Content-Type": "application/json" }, body: JSON.stringify({ input: { recipient_email: emails[0], extra_recipients: emails.slice(1), subject: `[Mesa] New catering proposal: ${String(i.customer?.name ?? "Customer").replace(/[\r\n]/g, " ")} — ${i.event_date} — ${i.guest_count} guests`, body: html, is_html: true, include_signature: false } }) });
         const payload = await res.json().catch(() => null);
@@ -354,6 +383,20 @@ ${link ? `<p><a href="${esc(link)}" style="background:#b3202a;color:#fff;padding
         if (emailStatus !== "accepted") aiErrors.push(`Email: ${payload?.error?.code || res.status}`);
       } catch { emailStatus = "unknown"; aiErrors.push("Email result unknown."); }
     }
+    // 5. In-app message to the owner (Messages → Owner alerts). Deduplicated per inquiry.
+    const customerName = String(i.customer?.name ?? "Customer").replace(/^Demo · /, "");
+    const summary = [
+      `${customerName} · ${i.event_date ?? "date not set"} ${String(i.event_time ?? "").slice(0, 5)} · ${i.guest_count ?? "?"} guests · ${String(i.service_style ?? "").replace("_", " ")}`,
+      `Dishes: ${dishes.map(d => `${d.name} × ${d.servings}`).join(", ") || "none"}`,
+      `Allergies & preferences: ${accomText ?? (realNotes.length ? `"${realNotes.join(", ")}" (needs breakdown)` : "none")}`,
+      customer.lines.some(l => !l.removed && l.issue) ? `Draft quote: incomplete — ${customer.lines.filter(l => !l.removed && l.issue).map(l => `${l.issue} (${l.label})`).join("; ")}` : `Draft quote: ${usd(customer.total)}${customer.taxPending ? " before tax" : ""}`,
+      quote ? `Internal check (demo values): cost ${usd(quote.total_cost)} · suggested ${usd(quote.recommended_price)} · margin ${(quote.margin_pct * 100).toFixed(1)}%` : `Internal check: ${calcError ?? "not calculated"}`,
+      ...(customer.flags.length ? ["Flags:", ...customer.flags.map(f => `• ${f}`)] : []),
+      ...(proposal ? ["", "Proposal draft (not sent):", proposal.slice(0, 1500)] : []),
+    ].join("\n");
+    const { error: msgError } = await db.from("mesa_message").insert({ channel: "owner", sender_kind: "system", sender_label: "Mesa", title: `New inquiry: ${customerName} — ${i.guest_count ?? "?"} guests`, body: summary.slice(0, 7900), inquiry_id: inquiryId, link: `/owner?inquiry=${inquiryId}`, dedupe_key: `proposal:${inquiryId}` });
+    if (msgError && !msgError.message.includes("duplicate")) aiErrors.push(`Message: ${msgError.message}`);
+
     await update({ status: "completed", email_status: emailStatus, email_recipients: emails, error: aiErrors.length ? aiErrors.join(" ") : null });
   } catch (e) {
     await update({ status: "failed", error: e instanceof Error ? e.message : "Pipeline failed" });

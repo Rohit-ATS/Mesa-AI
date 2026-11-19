@@ -1,12 +1,13 @@
 import { AlertCircle, ArrowLeft, Check } from "lucide-react";
-import { DetailRows, DishChips, SAVED_MESSAGE } from "./RequestCard";
+import { DetailRows, SAVED_MESSAGE } from "./RequestCard";
+import { DishQuantityList, portionsFor, type DishQuantities } from "./DishQuantities";
 import type { Details, StepKey } from "./types";
 import type { DraftStatus } from "./useInquiryDraft";
-import { dishLabel } from "./types";
+import { dishLabel, dishSummary } from "./types";
 
-export function ReviewPanel({ details, chosen, missing, status, error, onEdit, onRemoveDish, onAddDishes, onBack, onSubmit }: {
-  details: Details; chosen: string[]; missing: string[]; status: DraftStatus; error: string;
-  onEdit: (key: StepKey) => void; onRemoveDish: (name: string) => void; onAddDishes: () => void; onBack: () => void; onSubmit: () => void;
+export function ReviewPanel({ details, chosen, quantities, missing, status, error, onEdit, onRemoveDish, onQuantity, onAddDishes, onBack, onSubmit }: {
+  details: Details; chosen: string[]; quantities: DishQuantities; missing: string[]; status: DraftStatus; error: string;
+  onEdit: (key: StepKey) => void; onRemoveDish: (name: string) => void; onQuantity: (name: string, portions: number) => void; onAddDishes: () => void; onBack: () => void; onSubmit: () => void;
 }) {
   const locked = status !== "idle";
   const blocked = missing.length > 0;
@@ -20,10 +21,11 @@ export function ReviewPanel({ details, chosen, missing, status, error, onEdit, o
         <DetailRows details={details} locked={locked} onEdit={onEdit} />
         <div className="iq-dishes">
           <div className="iq-label-row"><span className="iq-label">Dishes ({dishLabel(chosen.length)})</span></div>
-          <DishChips chosen={chosen} onRemove={onRemoveDish} disabled={locked} />
+          <DishQuantityList chosen={chosen} quantities={quantities} guests={details.guests} disabled={locked} onChange={onQuantity} onRemove={onRemoveDish} />
+          {chosen.length > 0 && <p className="iq-muted">Your order: {dishSummary(chosen, name => portionsFor(name, quantities, details.guests))}. Portions per dish are separate from the {details.guests ?? "?"} guests.</p>}
           {!locked && <button type="button" className="iq-link iq-link-left" onClick={onAddDishes}>{chosen.length ? "Add more dishes from the menu" : "Choose dishes from the menu"}</button>}
         </div>
-        <p className="iq-muted">Demo only. Synthetic information is used, no prices are shown, and no payment is taken. You will get a confirmation email only if the owner approves your request.</p>
+        <p className="iq-muted">Demo only. Synthetic information is used, no prices are shown, and no payment is taken. You&apos;ll receive a quote by email to review and accept. Your order is confirmed only after you accept and we release it to the kitchen.</p>
         {status === "saved" && <p role="status" className="iq-success"><Check size={16} aria-hidden="true" />{SAVED_MESSAGE}</p>}
         {error && <p role="alert" className="iq-error"><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></p>}
         {blocked && !locked && <p id="iq-missing" className="iq-missing">Still needed: {missing.join(", ")}.</p>}

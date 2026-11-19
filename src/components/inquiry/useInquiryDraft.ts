@@ -41,7 +41,7 @@ export function useInquiryDraft() {
   const openReview = useCallback(() => { setView("review"); setEditing(null); }, []);
   const closeReview = useCallback(() => setView("chat"), []);
 
-  const submit = useCallback(async (dishes: string[], ensureReady: () => Promise<unknown>) => {
+  const submit = useCallback(async (dishes: string[], portions: Record<string, number>, ensureReady: () => Promise<unknown>) => {
     if (submitting.current || status !== "idle") return;
     const missing = missingLabels(details, dishes.length);
     if (missing.length > 0) { setSubmitError(`Still needed: ${missing.join(", ")}.`); return; }
@@ -64,6 +64,7 @@ export function useInquiryDraft() {
           address: details.address.trim(),
           allergies: details.allergies,
           preferences: details.preferences,
+          dish_quantities: portions,
         },
         p_dishes: dishes,
       });

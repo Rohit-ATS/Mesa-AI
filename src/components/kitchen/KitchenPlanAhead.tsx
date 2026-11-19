@@ -10,6 +10,7 @@ export type KitchenEvent = {
   id: string; event_date: string | null; event_time: string | null; venue_area: string | null; guest_count: number | null; dietary_flags: string[]; dietary_confirmed: boolean;
   dishes: KitchenDish[]; timeline: { dish: string; due_at: string }[]; checklist: Record<string, boolean>;
   allergies?: KitchenAccommodation[]; preferences?: KitchenAccommodation[]; breakdown_recorded?: boolean; pre_three_step?: boolean;
+  prep_start?: { at: string; reason: string | null; source: "ai" | "standard" | null; reminder_sent_at: string | null } | null;
 };
 
 /** Short operational dietary summary: structured allergies/preferences, or the legacy note. */
@@ -68,7 +69,7 @@ export function KitchenPlanAhead({ events, onOpen }: { events: KitchenEvent[]; o
         <div role="tablist" aria-label="Planning window" className="flex rounded-full border border-border bg-card p-1">{([7, 14] as const).map(d => <button key={d} role="tab" aria-selected={days === d} onClick={() => setDays(d)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${days === d ? "bg-secondary text-secondary-foreground" : "text-secondary"}`}>Next {d} days</button>)}</div>
       </div>
 
-      {!upcoming.length ? <p className="rounded-xl border border-border bg-card p-7 text-lg text-muted-foreground">No approved events in the next {days} days.</p> : <>
+      {!upcoming.length ? <p className="rounded-xl border border-border bg-card p-7 text-lg text-muted-foreground">No released events in the next {days} days.</p> : <>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{upcoming.map(e => { const p = prepState(e.checklist); return (
           <button key={e.id} onClick={() => onOpen(e.id)} className="rounded-xl border border-border bg-card p-5 text-left transition hover:shadow-soft">
             <div className="flex items-center justify-between gap-2"><strong className="font-display text-xl text-secondary">{shortDate(e.event_date!)}</strong><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${prepClass[p]}`}>{prepLabel[p]}</span></div>

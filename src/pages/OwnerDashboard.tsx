@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CalendarCheck2, ClipboardList, DollarSign, Inbox, UsersRound } from "lucide-react";
 import SignOutButton from "@/components/SignOutButton";
+import { MessagesLink } from "@/components/messages/MessagesLink";
 import { EventCalendar } from "@/components/EventCalendar";
 import { AvgGuestsChart, BreakdownChart, ChartCard, RequestsChart } from "@/components/dashboard/Charts";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +61,7 @@ export default function OwnerDashboard() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card"><div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5"><Link to="/" className="font-display text-2xl font-bold text-secondary">la bandera <span className="text-primary">kitchen</span></Link><div className="flex items-center gap-4"><span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Mesa / Owner</span><SignOutButton /></div></div></header>
+      <header className="border-b border-border bg-card"><div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5"><Link to="/" className="font-display text-2xl font-bold text-secondary">la bandera <span className="text-primary">kitchen</span></Link><div className="flex items-center gap-4"><span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Mesa / Owner</span><MessagesLink /><SignOutButton /></div></div></header>
       <div className="mx-auto max-w-7xl px-6 py-10">
         <Link to="/owner" className="inline-flex items-center gap-2 text-sm font-semibold text-primary"><ArrowLeft size={16} /> Back to inbox</Link>
         <div className="mt-6 flex flex-wrap items-end justify-between gap-4">

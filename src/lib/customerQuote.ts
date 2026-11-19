@@ -7,6 +7,9 @@ export type LineKind = "dish" | "optional" | "alternative" | "delivery" | "sf_su
 export type QuoteDish = { menu_item_id: string; name_es: string; name_en: string | null; category: string; qty_servings: number; price_per_serving: number | null; dietary_tags: string[] };
 export type QuoteAccommodation = { id: string; kind: "allergy" | "preference"; label: string; guest_count: number; alt_menu_item_id: string | null; alt_servings: number | null; alt_name: string | null; alt_price: number | null };
 export type QuoteEvent = { guests: number | null; service_style: string | null; venue_address: string | null; venue_zip: string | null; distance_mi: number | null; event_duration_hours: number | null };
+/** Values the automatic workup estimated because the customer didn't provide them. Always shown as demo estimates. */
+export type QuoteEstimates = { distance_mi?: number | null; event_duration_hours?: number | null };
+export const DEMO_ESTIMATE = "Demo estimate — confirm with customer";
 export type LineOverride = { qty?: number | null; unit_price?: number | null; note?: string; removed?: boolean };
 export type Overrides = Record<string, LineOverride>;
 export type QuoteLine = {
@@ -36,8 +39,12 @@ export function detectSanFrancisco(address: string | null, zip: string | null) {
 
 export function buildCustomerQuote(input: {
   event: QuoteEvent; dishes: QuoteDish[]; accommodations: QuoteAccommodation[]; settings: Record<string, number | null>; sfSurcharge: boolean | null; overrides: Overrides;
+  estimates?: QuoteEstimates; dietaryUnresolved?: string[];
 }) {
-  const { event, dishes, accommodations, settings, overrides } = input;
+  const { dishes, accommodations, settings, overrides } = input;
+  const estDistance = input.event.distance_mi == null && input.estimates?.distance_mi != null;
+  const estDuration = input.event.event_duration_hours == null && input.estimates?.event_duration_hours != null;
+  const event = { ...input.event, distance_mi: estDistance ? input.estimates!.distance_mi! : input.event.distance_mi, event_duration_hours: estDuration ? input.estimates!.event_duration_hours! : input.event.event_duration_hours };
   const s = (key: string) => { const v = settings[key]; return v == null || !Number.isFinite(Number(v)) ? null : Number(v); };
   const guests = event.guests;
   const base: Omit<QuoteLine, "removed" | "edited" | "amount" | "issue" | "note">[] = [];
@@ -62,7 +69,7 @@ export function buildCustomerQuote(input: {
   const trip = fee != null && perMile != null && event.distance_mi != null ? round2(fee + event.distance_mi * 2 * perMile) : null;
   base.push({
     key: "delivery", kind: "delivery", label: `Delivery — base fee + mileage${event.distance_mi != null ? ` (${event.distance_mi} mi each way, round trip)` : ""}`,
-    qty: vehicles, unit: vehicles === 1 ? "vehicle" : "vehicles", unit_price: trip, hint: event.distance_mi == null ? "Distance to venue needed for mileage" : "",
+    qty: vehicles, unit: vehicles === 1 ? "vehicle" : "vehicles", unit_price: trip, hint: event.distance_mi == null ? "Distance to venue needed for mileage" : estDistance ? `${DEMO_ESTIMATE} (distance)` : "",
   });
 
   const sfDetected = detectSanFrancisco(event.venue_address, event.venue_zip);
@@ -76,7 +83,7 @@ export function buildCustomerQuote(input: {
     base.push({
       key: "staffing", kind: "staffing", label: `Service staff${staff != null && hours != null ? ` — ${staff} staff × ${hours} h` : ""}`,
       qty: staff != null && hours != null ? round2(staff * hours) : null, unit: "staff hours", unit_price: s("staff_charge_hourly"),
-      hint: hours == null ? "Event length needed for staffing hours" : "",
+      hint: hours == null ? "Event length needed for staffing hours" : estDuration && event.service_style === "full_service" ? `${DEMO_ESTIMATE} (event length)` : "",
     });
   }
 
@@ -103,6 +110,7 @@ export function buildCustomerQuote(input: {
   };
 
   const blocking: string[] = [];
+  for (const note of input.dietaryUnresolved ?? []) blocking.push(`Resolve before sending: dietary note "${note}" — record each allergy or preference with its number of meals, or confirm there are none.`);
   if (guests == null || guests < MIN_GUESTS) blocking.push(`La Bandera Kitchen caters a minimum of ${MIN_GUESTS} guests${guests != null ? ` — this event has ${guests}` : ""}.`);
   if (!active.some(l => l.kind === "dish")) blocking.push("Add at least one dish line.");
   for (const l of active) if (l.issue) blocking.push(`${l.issue}: ${l.label}`);
@@ -111,6 +119,8 @@ export function buildCustomerQuote(input: {
     if (!accommodationCovered(a.label, dishes) && (!a.alt_menu_item_id || !a.alt_servings)) blocking.push(`Confirm an alternative meal for ${a.kind} "${a.label}" (${a.guest_count} guests).`);
   }
   const flags = [...blocking];
+  if (estDistance) flags.push(`Distance ${event.distance_mi} mi is a ${DEMO_ESTIMATE.toLowerCase()}.`);
+  if (estDuration) flags.push(`Event length ${event.event_duration_hours} h is a ${DEMO_ESTIMATE.toLowerCase()}.`);
   if (!taxRemoved && rate == null) flags.push("Tax pending — totals are before tax.");
   if (sfDetected) flags.push(sfOn ? "San Francisco venue detected — surcharge added." : "San Francisco venue detected — surcharge switched off.");
 
@@ -119,6 +129,20 @@ export function buildCustomerQuote(input: {
 }
 
 export type CustomerQuote = ReturnType<typeof buildCustomerQuote>;
+
+/** When confirmed alternatives push total main-dish servings above the guest count, suggest reducing the main dish. Never applied automatically. */
+export function alternativeSuggestions(quote: CustomerQuote, guests: number | null) {
+  if (guests == null) return [];
+  const active = quote.lines.filter(l => !l.removed);
+  const alternatives = active.filter(l => l.kind === "alternative" && l.qty != null);
+  const altServings = alternatives.reduce((sum, l) => sum + (l.qty ?? 0), 0);
+  const mains = active.filter(l => l.kind === "dish" && l.qty != null);
+  if (!alternatives.length || !mains.length) return [];
+  const main = [...mains].sort((a, b) => (b.qty ?? 0) - (a.qty ?? 0))[0];
+  const target = Math.max(1, Math.round(((main.qty ?? 0) - altServings) * 100) / 100);
+  if ((main.qty ?? 0) + altServings <= guests || target === main.qty) return [];
+  return [{ key: main.key, label: main.label, from: main.qty ?? 0, to: target, altServings }];
+}
 
 /** Lines in the shape the approve-quote action expects. */
 export function linesForApproval(quote: CustomerQuote) {

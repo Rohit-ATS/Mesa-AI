@@ -30,7 +30,7 @@ export function EventCalendar({ events, onSelect, title = "Event calendar" }: Pr
       </div>
       <div className="mt-3 flex flex-wrap gap-3 text-xs">
         {(["not_started", "in_progress", "prepared"] as PrepState[]).map(s => <span key={s} className={`rounded-full px-2.5 py-1 font-semibold ${prepClass[s]}`}>{prepLabel[s]}</span>)}
-        <span className="text-muted-foreground">Approved events only</span>
+        <span className="text-muted-foreground">Released to kitchen only</span>
       </div>
       <div className="mt-5 hidden grid-cols-7 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => <div key={d} className="bg-accent p-2 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{d}</div>)}
@@ -62,7 +62,7 @@ export function EventCalendar({ events, onSelect, title = "Event calendar" }: Pr
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Next up</p>
         {upcoming.length ? <ul className="mt-3 space-y-2">{upcoming.map(e => (
           <li key={e.id}><button onClick={() => onSelect(e.id)} className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg p-2 text-left text-sm hover:bg-accent"><span><strong className="text-secondary">{format(new Date(`${e.date}T12:00:00`), "EEE, MMM d")}</strong> · {e.time?.slice(0, 5) || "Time TBC"} · {e.guests ?? "?"} guests · {e.title}</span><span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${prepClass[e.prep]}`}>{prepLabel[e.prep]}</span></button></li>
-        ))}</ul> : <p className="mt-2 text-sm text-muted-foreground">No upcoming approved events.</p>}
+        ))}</ul> : <p className="mt-2 text-sm text-muted-foreground">No upcoming released events.</p>}
       </div>
     </section>
   );
